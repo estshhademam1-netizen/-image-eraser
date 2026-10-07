@@ -1,1 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <title>Image Eraser</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f7fb;
+            color: #222;
+        }
+
+        .container {
+            width: 92%;
+            max-width: 700px;
+            margin: 50px auto;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        p {
+            color: #666;
+        }
+
+        .upload-box {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            margin-top: 30px;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        button {
+            border: none;
+            padding: 14px 30px;
+            border-radius: 12px;
+            background: #222;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            opacity: 0.85;
+        }
+
+        #preview {
+            max-width: 100%;
+            margin-top: 25px;
+            border-radius: 15px;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>✨ Image Eraser</h1>
+
+    <p>
+        Upload an image and remove unwanted objects.
+    </p>
+
+    <div class="upload-box">
+
+        <form action="/upload" method="POST" enctype="multipart/form-data">
+
+            <input
+                type="file"
+                name="image"
+                id="imageInput"
+                accept="image/*"
+                required
+            >
+
+            <button type="submit">
+                Upload Image
+            </button>
+
+        </form>
+
+        <img id="preview" alt="Image Preview">
+
+    </div>
+
+</div>
+
+<script>
+
+const imageInput = document.getElementById("imageInput");
+const preview = document.getElementById("preview");
+
+imageInput.addEventListener("change", function () {
+
+    const file = this.files[0];
+
+    if (file) {
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = "block";
+    }
+
+});
+
+</script>
+
+</body>
+</html>
