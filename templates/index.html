@@ -1,695 +1,1783 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Resimden İlgisiz Nesne Silme - Aesthetic Eraser Studio</title>
-    
-    <!-- Google Fonts & Lucide Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
 
-    <style>
-        :root {
-            --bg-color: #fdf2f8;
-            --card-bg: #ffffff;
-            --primary-pink: #f472b6;
-            --primary-hover: #ec4899;
-            --soft-pink: #fbcfe8;
-            --accent-purple: #c084fc;
-            --text-dark: #475569;
-            --border-color: #fce7f3;
-        }
+<meta charset="UTF-8">
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-        }
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
 
-        body {
-            background-color: var(--bg-color);
-            background-image: radial-gradient(#fbcfe8 1px, transparent 1px);
-            background-size: 24px 24px;
-            color: var(--text-dark);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
+<title>AI Object Eraser</title>
 
-        /* Top Header */
-        header {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(12px);
-            border-bottom: 2px solid var(--border-color);
-            padding: 16px 32px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 50;
-        }
+<script src="https://unpkg.com/lucide@latest"></script>
 
-        .logo-area {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
+<style>
 
-        .logo-icon {
-            width: 42px;
-            height: 42px;
-            background: linear-gradient(135deg, var(--primary-pink), var(--accent-purple));
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            box-shadow: 0 8px 16px rgba(244, 114, 182, 0.3);
-        }
+:root {
+    --pink: #ec4899;
+    --pink2: #f472b6;
+    --purple: #a855f7;
+    --bg: #fdf2f8;
+    --card: #ffffff;
+    --text: #475569;
+}
 
-        .logo-title {
-            font-size: 1.25rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #db2777, #9333ea);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+* {
+    box-sizing: border-box;
+}
 
-        /* Main Workspace Layout */
-        .workspace {
-            flex: 1;
-            display: flex;
-            gap: 24px;
-            padding: 24px 32px;
-            max-width: 1600px;
-            margin: 0 auto;
-            width: 100%;
-        }
+body {
 
-        /* Control Panel (Sidebar) */
-        .sidebar {
-            width: 320px;
-            background: var(--card-bg);
-            border-radius: 24px;
-            padding: 24px;
-            border: 2px solid var(--border-color);
-            box-shadow: 0 10px 25px rgba(244, 114, 182, 0.08);
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            height: fit-content;
-        }
+    margin: 0;
 
-        .panel-section-title {
-            font-size: 0.85rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: #94a3b8;
-            margin-bottom: 8px;
-        }
+    font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
 
-        .upload-btn-label {
-            background: var(--bg-color);
-            border: 2px dashed var(--primary-pink);
-            border-radius: 18px;
-            padding: 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-            color: var(--primary-hover);
-            font-weight: 600;
-        }
+    background:
+        radial-gradient(
+            #fbcfe8 1px,
+            transparent 1px
+        );
 
-        .upload-btn-label:hover {
-            background: var(--soft-pink);
-            transform: translateY(-2px);
-        }
+    background-size: 24px 24px;
 
-        /* Method Switcher */
-        .method-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
+    background-color: var(--bg);
 
-        .method-card {
-            border: 2px solid var(--border-color);
-            background: #fff;
-            border-radius: 16px;
-            padding: 12px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
+    color: var(--text);
 
-        .method-card.active {
-            border-color: var(--primary-pink);
-            background: #fdf2f8;
-            box-shadow: 0 4px 12px rgba(244, 114, 182, 0.15);
-        }
+}
 
-        .method-card i {
-            color: var(--primary-pink);
-            margin-bottom: 4px;
-        }
+header {
 
-        .method-card label {
-            display: block;
-            font-size: 0.8rem;
-            font-weight: 700;
-            cursor: pointer;
-        }
+    padding: 18px 24px;
 
-        /* Controls Slider */
-        .slider-box {
-            background: #f8fafc;
-            padding: 14px;
-            border-radius: 16px;
-            border: 1px solid #f1f5f9;
-        }
+    background:
+        rgba(255,255,255,.9);
 
-        .slider-header {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
+    backdrop-filter:
+        blur(12px);
 
-        input[type="range"] {
-            width: 100%;
-            accent-color: var(--primary-pink);
-        }
+    border-bottom:
+        2px solid #fce7f3;
 
-        /* Action Buttons */
-        .action-btn-group {
-            display: flex;
-            gap: 10px;
-        }
+    display: flex;
 
-        .btn-secondary {
-            flex: 1;
-            background: #f1f5f9;
-            color: #475569;
-            border: none;
-            padding: 12px;
-            border-radius: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            transition: 0.2s;
-        }
+    justify-content:
+        space-between;
 
-        .btn-secondary:hover {
-            background: #e2e8f0;
-        }
+    align-items: center;
 
-        .btn-primary {
-            width: 100%;
-            background: linear-gradient(135deg, var(--primary-pink), var(--primary-hover));
-            color: white;
-            border: none;
-            padding: 16px;
-            border-radius: 18px;
-            font-size: 1rem;
-            font-weight: 700;
-            cursor: pointer;
-            box-shadow: 0 10px 20px rgba(244, 114, 182, 0.35);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: all 0.2s ease;
-        }
+}
 
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 24px rgba(244, 114, 182, 0.45);
-        }
+.brand {
 
-        .btn-primary:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
+    display: flex;
 
-        /* Dual Display Viewports */
-        .display-area {
-            flex: 1;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
+    align-items: center;
 
-        .viewport-card {
-            background: var(--card-bg);
-            border-radius: 24px;
-            border: 2px solid var(--border-color);
-            box-shadow: 0 10px 25px rgba(244, 114, 182, 0.05);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            height: 680px;
-        }
+    gap: 12px;
 
-        .viewport-header {
-            background: #fdf2f8;
-            padding: 14px 20px;
-            border-bottom: 2px solid var(--border-color);
-            font-size: 0.9rem;
-            font-weight: 700;
-            color: var(--primary-hover);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+}
 
-        .viewport-body {
-            flex: 1;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #fafafa;
-            overflow: hidden;
-        }
+.logo {
 
-        .canvas-wrapper {
-            position: relative;
-            max-width: 100%;
-            max-height: 100%;
-            display: inline-block;
-        }
+    width: 44px;
+    height: 44px;
 
-        canvas {
-            display: block;
-            max-width: 100%;
-            max-height: 600px;
-            object-fit: contain;
-        }
+    border-radius: 14px;
 
-        #maskCanvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            cursor: crosshair;
-            touch-action: none;
-        }
+    background:
+        linear-gradient(
+            135deg,
+            var(--pink),
+            var(--purple)
+        );
 
-        .placeholder-text {
-            text-align: center;
-            color: #cbd5e1;
-            font-weight: 500;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 12px;
-        }
+    color: white;
 
-        /* Loader Overlay */
-        .loading-overlay {
-            position: absolute;
-            inset: 0;
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(4px);
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 16px;
-            z-index: 30;
-        }
+    display: flex;
 
-        .spinner {
-            width: 48px;
-            height: 48px;
-            border: 4px solid var(--soft-pink);
-            border-top-color: var(--primary-pink);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
+    align-items: center;
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+    justify-content: center;
 
-        @media (max-width: 1024px) {
-            .workspace {
-                flex-direction: column;
-            }
-            .sidebar {
-                width: 100%;
-            }
-            .display-area {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+}
+
+.title {
+
+    font-weight: 800;
+
+    font-size: 18px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #db2777,
+            #9333ea
+        );
+
+    -webkit-background-clip: text;
+
+    -webkit-text-fill-color:
+        transparent;
+
+}
+
+.workspace {
+
+    max-width: 1500px;
+
+    margin: auto;
+
+    padding: 20px;
+
+    display: grid;
+
+    grid-template-columns:
+        310px 1fr;
+
+    gap: 20px;
+
+}
+
+.sidebar {
+
+    background: white;
+
+    border:
+        2px solid #fce7f3;
+
+    border-radius: 24px;
+
+    padding: 20px;
+
+    box-shadow:
+        0 10px 30px
+        rgba(236,72,153,.08);
+
+    height: fit-content;
+
+}
+
+.section {
+
+    margin-bottom: 20px;
+
+}
+
+.section-title {
+
+    font-size: 12px;
+
+    font-weight: 800;
+
+    text-transform:
+        uppercase;
+
+    color: #94a3b8;
+
+    margin-bottom: 9px;
+
+}
+
+.upload {
+
+    border:
+        2px dashed
+        var(--pink);
+
+    border-radius: 17px;
+
+    padding: 20px;
+
+    text-align: center;
+
+    color: var(--pink);
+
+    cursor: pointer;
+
+}
+
+.upload input {
+    display: none;
+}
+
+.tools {
+
+    display: grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap: 8px;
+
+}
+
+.tool {
+
+    border:
+        2px solid #fce7f3;
+
+    background: white;
+
+    border-radius: 15px;
+
+    padding: 12px 5px;
+
+    text-align: center;
+
+    cursor: pointer;
+
+    font-weight: 700;
+
+    font-size: 13px;
+
+}
+
+.tool.active {
+
+    background: #fdf2f8;
+
+    border-color:
+        var(--pink);
+
+    color:
+        #db2777;
+
+}
+
+.methods {
+
+    display: grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap: 8px;
+
+}
+
+.method {
+
+    border:
+        2px solid #fce7f3;
+
+    background: white;
+
+    border-radius: 15px;
+
+    padding: 12px 5px;
+
+    text-align: center;
+
+    cursor: pointer;
+
+    font-weight: 700;
+
+    font-size: 13px;
+
+}
+
+.method.active {
+
+    background: #fdf2f8;
+
+    border-color:
+        var(--pink);
+
+    color:
+        #db2777;
+
+}
+
+.slider {
+
+    background:
+        #f8fafc;
+
+    border-radius:
+        15px;
+
+    padding: 13px;
+
+}
+
+.slider-head {
+
+    display: flex;
+
+    justify-content:
+        space-between;
+
+    margin-bottom: 8px;
+
+    font-size: 13px;
+
+    font-weight: 700;
+
+}
+
+input[type="range"] {
+    width: 100%;
+    accent-color: var(--pink);
+}
+
+.actions {
+
+    display: grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap: 8px;
+
+}
+
+button {
+
+    border: 0;
+
+    border-radius: 15px;
+
+    padding: 13px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+}
+
+.secondary {
+
+    background: #f1f5f9;
+
+    color: #475569;
+
+}
+
+.primary {
+
+    width: 100%;
+
+    margin-top: 10px;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--pink),
+            #db2777
+        );
+
+    color: white;
+
+    padding: 16px;
+
+    font-size: 15px;
+
+}
+
+.primary:disabled {
+
+    opacity: .45;
+
+}
+
+.display {
+
+    display: grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap: 18px;
+
+}
+
+.panel {
+
+    background: white;
+
+    border:
+        2px solid #fce7f3;
+
+    border-radius: 24px;
+
+    overflow: hidden;
+
+    min-height: 600px;
+
+}
+
+.panel-title {
+
+    padding: 14px 18px;
+
+    background:
+        #fdf2f8;
+
+    color:
+        #db2777;
+
+    font-weight: 800;
+
+}
+
+.viewport {
+
+    height: 600px;
+
+    display: flex;
+
+    justify-content:
+        center;
+
+    align-items:
+        center;
+
+    background: #fafafa;
+
+    overflow: hidden;
+
+    position: relative;
+
+}
+
+.canvas-wrap {
+
+    position: relative;
+
+    max-width: 100%;
+
+    max-height: 100%;
+
+}
+
+canvas {
+
+    display: block;
+
+    max-width: 100%;
+
+    max-height: 570px;
+
+}
+
+#maskCanvas {
+
+    position: absolute;
+
+    left: 0;
+
+    top: 0;
+
+    cursor: crosshair;
+
+    touch-action: none;
+
+}
+
+#resultImage {
+
+    max-width: 100%;
+
+    max-height: 570px;
+
+    display: none;
+
+}
+
+.loader {
+
+    display: none;
+
+    position: absolute;
+
+    inset: 0;
+
+    background:
+        rgba(255,255,255,.85);
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    flex-direction:
+        column;
+
+    gap: 12px;
+
+}
+
+.spinner {
+
+    width: 45px;
+
+    height: 45px;
+
+    border:
+        4px solid #fbcfe8;
+
+    border-top-color:
+        var(--pink);
+
+    border-radius: 50%;
+
+    animation:
+        spin .8s linear infinite;
+
+}
+
+@keyframes spin {
+
+    to {
+        transform:
+            rotate(360deg);
+    }
+
+}
+
+@media(max-width:900px) {
+
+    .workspace {
+
+        grid-template-columns:
+            1fr;
+
+    }
+
+    .display {
+
+        grid-template-columns:
+            1fr;
+
+    }
+
+}
+
+</style>
+
 </head>
+
+
 <body>
 
-    <!-- Header -->
-    <header>
-        <div class="logo-area">
-            <div class="logo-icon">
-                <i data-lucide="wand-2"></i>
-            </div>
-            <div>
-                <div class="logo-title">Resimden İlgisiz Nesne Silme</div>
-            </div>
+
+<header>
+
+    <div class="brand">
+
+        <div class="logo">
+            ✨
         </div>
-        <div style="font-size: 0.85rem; font-weight: 600; color: #a855f7;">✨ Aesthetic AI Studio</div>
-    </header>
 
-    <!-- Workspace -->
-    <div class="workspace">
+        <div class="title">
+            AI Object Eraser
+        </div>
 
-        <!-- Sidebar Panel -->
-        <aside class="sidebar">
-            
-            <!-- Upload -->
-            <div>
-                <div class="panel-section-title">Upload Photo</div>
-                <label for="imageLoader" class="upload-btn-label">
-                    <i data-lucide="image-plus" style="width: 32px; height: 32px;"></i>
-                    <span>Choose an Image</span>
-                </label>
-                <input type="file" id="imageLoader" accept="image/*" style="display: none;">
-            </div>
-
-            <!-- Removal Engine -->
-            <div>
-                <div class="panel-section-title">Algorithm</div>
-                <div class="method-grid">
-                    <div class="method-card active" id="aiCard" onclick="setMethod('ai')">
-                        <i data-lucide="sparkles"></i>
-                        <label>AI LaMa</label>
-                    </div>
-                    <div class="method-card" id="classicCard" onclick="setMethod('classic')">
-                        <i data-lucide="zap"></i>
-                        <label>Classic</label>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Brush Size -->
-            <div>
-                <div class="panel-section-title">Brush Tool</div>
-                <div class="slider-box">
-                    <div class="slider-header">
-                        <span>Brush Size</span>
-                        <span id="brushSizeVal" style="color: var(--primary-pink)">40 px</span>
-                    </div>
-                    <input type="range" id="brushSize" min="5" max="100" value="40">
-                </div>
-            </div>
-
-            <!-- Mask Actions -->
-            <div>
-                <div class="panel-section-title">Actions</div>
-                <div class="action-btn-group">
-                    <button class="btn-secondary" id="undoBtn" onclick="undoMask()">
-                        <i data-lucide="undo-2" style="width: 16px;"></i> Undo
-                    </button>
-                    <button class="btn-secondary" onclick="clearMask()">
-                        <i data-lucide="trash-2" style="width: 16px;"></i> Clear
-                    </button>
-                </div>
-            </div>
-
-            <!-- Execute Button -->
-            <button class="btn-primary" id="processBtn" onclick="processImage()" disabled>
-                <i data-lucide="sparkles"></i> Remove Selected Object
-            </button>
-
-            <!-- Download Button -->
-            <a id="downloadBtn" download="cleaned_image.jpg" class="btn-primary" style="display: none; background: #10b981; text-decoration: none;">
-                <i data-lucide="download"></i> Download Result
-            </a>
-
-        </aside>
-
-        <!-- Viewports Area -->
-        <main class="display-area">
-
-            <!-- Original Image Viewport -->
-            <div class="viewport-card">
-                <div class="viewport-header">
-                    <i data-lucide="image"></i> Original Image (Paint Over Object)
-                </div>
-                <div class="viewport-body" id="originalViewport">
-                    <div class="placeholder-text" id="placeholderLeft">
-                        <i data-lucide="upload-cloud" style="width: 48px; height: 48px;"></i>
-                        <span>Upload an image to start editing</span>
-                    </div>
-                    
-                    <div class="canvas-wrapper" id="canvasWrapper" style="display: none;">
-                        <canvas id="imageCanvas"></canvas>
-                        <canvas id="maskCanvas"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Modified Image Viewport -->
-            <div class="viewport-card">
-                <div class="viewport-header">
-                    <i data-lucide="sparkles"></i> Modified Output Image
-                </div>
-                <div class="viewport-body">
-                    <div class="placeholder-text" id="placeholderRight">
-                        <i data-lucide="image" style="width: 48px; height: 48px;"></i>
-                        <span>Modified image will appear here</span>
-                    </div>
-
-                    <img id="resultImage" style="display: none; max-width: 100%; max-height: 600px; object-fit: contain; border-radius: 12px;">
-
-                    <!-- Loader -->
-                    <div class="loading-overlay" id="loadingOverlay">
-                        <div class="spinner"></div>
-                        <div style="font-weight: 700; color: var(--primary-hover);">AI Magic in progress...</div>
-                    </div>
-                </div>
-            </div>
-
-        </main>
     </div>
 
-    <script>
-        lucide.createIcons();
+    <div>
+        ✨ Aesthetic AI Studio
+    </div>
 
-        const imageCanvas = document.getElementById('imageCanvas');
-        const maskCanvas = document.getElementById('maskCanvas');
-        const imgCtx = imageCanvas.getContext('2d');
-        const maskCtx = maskCanvas.getContext('2d');
+</header>
 
-        const imageLoader = document.getElementById('imageLoader');
-        const brushSize = document.getElementById('brushSize');
-        const brushSizeVal = document.getElementById('brushSizeVal');
-        const processBtn = document.getElementById('processBtn');
-        const downloadBtn = document.getElementById('downloadBtn');
-        const resultImage = document.getElementById('resultImage');
-        const loadingOverlay = document.getElementById('loadingOverlay');
 
-        let currentImage = null;
-        let isDrawing = false;
-        let selectedMethod = 'ai';
-        let brushRadius = 40;
-        let strokeHistory = [];
+<div class="workspace">
 
-        function setMethod(method) {
-            selectedMethod = method;
-            document.getElementById('aiCard').classList.toggle('active', method === 'ai');
-            document.getElementById('classicCard').classList.toggle('active', method === 'classic');
-        }
 
-        imageLoader.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
+<!-- =====================================================
+SIDEBAR
+===================================================== -->
 
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                currentImage = new Image();
-                currentImage.onload = () => {
-                    initCanvas();
-                };
-                currentImage.src = event.target.result;
+<aside class="sidebar">
+
+
+<div class="section">
+
+<div class="section-title">
+Upload
+</div>
+
+<label class="upload">
+
+📷 Choose Image
+
+<input
+    type="file"
+    id="imageLoader"
+    accept="image/*"
+>
+
+</label>
+
+</div>
+
+
+<!-- SELECTION TOOL -->
+
+<div class="section">
+
+<div class="section-title">
+Selection Tool
+</div>
+
+
+<div class="tools">
+
+<div
+    class="tool active"
+    id="brushTool"
+    onclick="setSelectionMode('brush')"
+>
+🖌️ Brush
+</div>
+
+
+<div
+    class="tool"
+    id="outlineTool"
+    onclick="setSelectionMode('outline')"
+>
+🪄 Smart Outline
+</div>
+
+</div>
+
+</div>
+
+
+<!-- METHOD -->
+
+<div class="section">
+
+<div class="section-title">
+Removal Method
+</div>
+
+
+<div class="methods">
+
+<div
+    class="method active"
+    id="aiMethod"
+    onclick="setMethod('ai')"
+>
+🤖 AI
+</div>
+
+
+<div
+    class="method"
+    id="classicMethod"
+    onclick="setMethod('classic')"
+>
+⚡ Classic
+</div>
+
+</div>
+
+</div>
+
+
+<!-- BRUSH -->
+
+<div class="section">
+
+<div class="section-title">
+Brush Size
+</div>
+
+<div class="slider">
+
+<div class="slider-head">
+
+<span>
+Size
+</span>
+
+<span id="brushValue">
+40 px
+</span>
+
+</div>
+
+<input
+    type="range"
+    id="brushSize"
+    min="5"
+    max="120"
+    value="40"
+>
+
+</div>
+
+</div>
+
+
+<!-- ACTIONS -->
+
+<div class="section">
+
+<div class="section-title">
+Actions
+</div>
+
+<div class="actions">
+
+<button
+    class="secondary"
+    onclick="undoMask()"
+>
+↩️ Undo
+</button>
+
+<button
+    class="secondary"
+    onclick="clearMask()"
+>
+🗑️ Clear
+</button>
+
+</div>
+
+</div>
+
+
+<button
+    class="primary"
+    id="processBtn"
+    onclick="processImage()"
+    disabled
+>
+✨ Remove Object
+</button>
+
+
+<a
+    id="downloadBtn"
+    class="primary"
+    download="cleaned_image.jpg"
+    style="
+        display:none;
+        text-decoration:none;
+        text-align:center;
+    "
+>
+⬇️ Download Result
+</a>
+
+
+</aside>
+
+
+<!-- =====================================================
+DISPLAY
+===================================================== -->
+
+<main class="display">
+
+
+<div class="panel">
+
+<div class="panel-title">
+📷 Original / Selection
+</div>
+
+
+<div
+    class="viewport"
+    id="originalViewport"
+>
+
+
+<div
+    id="placeholder"
+    style="
+        text-align:center;
+        color:#cbd5e1;
+    "
+>
+
+📷
+
+<br>
+
+Upload an image
+
+</div>
+
+
+<div
+    class="canvas-wrap"
+    id="canvasWrap"
+    style="display:none"
+>
+
+<canvas id="imageCanvas"></canvas>
+
+<canvas id="maskCanvas"></canvas>
+
+</div>
+
+
+</div>
+
+</div>
+
+
+<div class="panel">
+
+<div class="panel-title">
+✨ Result
+</div>
+
+
+<div class="viewport">
+
+
+<div
+    id="resultPlaceholder"
+    style="
+        color:#cbd5e1;
+        text-align:center;
+    "
+>
+Result will appear here
+</div>
+
+
+<img
+    id="resultImage"
+>
+
+
+<div
+    class="loader"
+    id="loader"
+>
+
+<div class="spinner"></div>
+
+<div
+    id="loaderText"
+    style="font-weight:700"
+>
+Processing...
+</div>
+
+</div>
+
+
+</div>
+
+</div>
+
+
+</main>
+
+</div>
+
+
+<script>
+
+lucide.createIcons();
+
+
+const imageLoader =
+    document.getElementById(
+        "imageLoader"
+    );
+
+
+const imageCanvas =
+    document.getElementById(
+        "imageCanvas"
+    );
+
+
+const maskCanvas =
+    document.getElementById(
+        "maskCanvas"
+    );
+
+
+const imageCtx =
+    imageCanvas.getContext(
+        "2d"
+    );
+
+
+const maskCtx =
+    maskCanvas.getContext(
+        "2d"
+    );
+
+
+const processBtn =
+    document.getElementById(
+        "processBtn"
+    );
+
+
+const brushSize =
+    document.getElementById(
+        "brushSize"
+    );
+
+
+const brushValue =
+    document.getElementById(
+        "brushValue"
+    );
+
+
+const loader =
+    document.getElementById(
+        "loader"
+    );
+
+
+const loaderText =
+    document.getElementById(
+        "loaderText"
+    );
+
+
+const resultImage =
+    document.getElementById(
+        "resultImage"
+    );
+
+
+const downloadBtn =
+    document.getElementById(
+        "downloadBtn"
+    );
+
+
+let currentImage = null;
+
+let selectedMethod = "ai";
+
+let selectionMode = "brush";
+
+let drawing = false;
+
+let history = [];
+
+let outlinePoints = [];
+
+
+/* =====================================================
+IMAGE
+===================================================== */
+
+imageLoader.addEventListener(
+    "change",
+    function(event) {
+
+        const file =
+            event.target.files[0];
+
+        if (!file)
+            return;
+
+        const reader =
+            new FileReader();
+
+        reader.onload =
+            function(e) {
+
+                currentImage =
+                    new Image();
+
+                currentImage.onload =
+                    function() {
+
+                        imageCanvas.width =
+                            currentImage.naturalWidth;
+
+                        imageCanvas.height =
+                            currentImage.naturalHeight;
+
+                        maskCanvas.width =
+                            currentImage.naturalWidth;
+
+                        maskCanvas.height =
+                            currentImage.naturalHeight;
+
+                        imageCtx.clearRect(
+                            0,
+                            0,
+                            imageCanvas.width,
+                            imageCanvas.height
+                        );
+
+                        imageCtx.drawImage(
+                            currentImage,
+                            0,
+                            0
+                        );
+
+                        clearMask();
+
+                        document
+                            .getElementById(
+                                "placeholder"
+                            )
+                            .style.display =
+                            "none";
+
+                        document
+                            .getElementById(
+                                "canvasWrap"
+                            )
+                            .style.display =
+                            "inline-block";
+
+                        processBtn.disabled =
+                            false;
+
+                    };
+
+                currentImage.src =
+                    e.target.result;
+
             };
-            reader.readAsDataURL(file);
-        });
 
-        function initCanvas() {
-            imageCanvas.width = currentImage.naturalWidth;
-            imageCanvas.height = currentImage.naturalHeight;
-            maskCanvas.width = currentImage.naturalWidth;
-            maskCanvas.height = currentImage.naturalHeight;
+        reader.readAsDataURL(
+            file
+        );
 
-            imgCtx.drawImage(currentImage, 0, 0);
-            clearMask();
+    }
+);
 
-            document.getElementById('placeholderLeft').style.display = 'none';
-            document.getElementById('canvasWrapper').style.display = 'inline-block';
-            processBtn.disabled = false;
+
+/* =====================================================
+METHOD
+===================================================== */
+
+function setMethod(method) {
+
+    selectedMethod =
+        method;
+
+    document
+        .getElementById(
+            "aiMethod"
+        )
+        .classList.toggle(
+            "active",
+            method === "ai"
+        );
+
+    document
+        .getElementById(
+            "classicMethod"
+        )
+        .classList.toggle(
+            "active",
+            method === "classic"
+        );
+
+}
+
+
+/* =====================================================
+SELECTION MODE
+===================================================== */
+
+function setSelectionMode(mode) {
+
+    selectionMode =
+        mode;
+
+    document
+        .getElementById(
+            "brushTool"
+        )
+        .classList.toggle(
+            "active",
+            mode === "brush"
+        );
+
+    document
+        .getElementById(
+            "outlineTool"
+        )
+        .classList.toggle(
+            "active",
+            mode === "outline"
+        );
+
+    clearMask();
+
+}
+
+
+/* =====================================================
+BRUSH
+===================================================== */
+
+brushSize.addEventListener(
+    "input",
+    function() {
+
+        brushValue.innerText =
+            this.value +
+            " px";
+
+    }
+);
+
+
+/* =====================================================
+COORDINATES
+===================================================== */
+
+function getPosition(e) {
+
+    const rect =
+        maskCanvas.getBoundingClientRect();
+
+    let clientX;
+    let clientY;
+
+    if (
+        e.touches &&
+        e.touches.length
+    ) {
+
+        clientX =
+            e.touches[0].clientX;
+
+        clientY =
+            e.touches[0].clientY;
+
+    } else {
+
+        clientX =
+            e.clientX;
+
+        clientY =
+            e.clientY;
+
+    }
+
+    const scaleX =
+        maskCanvas.width /
+        rect.width;
+
+    const scaleY =
+        maskCanvas.height /
+        rect.height;
+
+    return {
+
+        x:
+            (clientX - rect.left)
+            * scaleX,
+
+        y:
+            (clientY - rect.top)
+            * scaleY
+
+    };
+
+}
+
+
+/* =====================================================
+POINTER START
+===================================================== */
+
+maskCanvas.addEventListener(
+    "pointerdown",
+    function(e) {
+
+        e.preventDefault();
+
+        maskCanvas.setPointerCapture(
+            e.pointerId
+        );
+
+        drawing = true;
+
+        if (
+            selectionMode ===
+            "outline"
+        ) {
+
+            outlinePoints = [];
+
+            const p =
+                getPosition(e);
+
+            outlinePoints.push(p);
+
+            maskCtx.beginPath();
+
+            maskCtx.moveTo(
+                p.x,
+                p.y
+            );
+
+        } else {
+
+            saveHistory();
+
+            drawBrush(e);
+
         }
 
-        brushSize.addEventListener('input', (e) => {
-            brushRadius = e.target.value;
-            brushSizeVal.innerText = `${brushRadius} px`;
-        });
+    }
+);
 
-        function getCanvasCoordinates(e) {
-            const rect = maskCanvas.getBoundingClientRect();
-            const scaleX = maskCanvas.width / rect.width;
-            const scaleY = maskCanvas.height / rect.height;
 
-            let clientX = e.clientX;
-            let clientY = e.clientY;
+/* =====================================================
+POINTER MOVE
+===================================================== */
 
-            if (e.touches && e.touches.length > 0) {
-                clientX = e.touches[0].clientX;
-                clientY = e.touches[0].clientY;
-            }
+maskCanvas.addEventListener(
+    "pointermove",
+    function(e) {
 
-            return {
-                x: (clientX - rect.left) * scaleX,
-                y: (clientY - rect.top) * scaleY
-            };
-        }
+        if (!drawing)
+            return;
 
-        maskCanvas.addEventListener('mousedown', startDrawing);
-        maskCanvas.addEventListener('mousemove', draw);
-        window.addEventListener('mouseup', stopDrawing);
+        e.preventDefault();
 
-        maskCanvas.addEventListener('touchstart', startDrawing, { passive: false });
-        maskCanvas.addEventListener('touchmove', draw, { passive: false });
-        window.addEventListener('touchend', stopDrawing);
+        if (
+            selectionMode ===
+            "outline"
+        ) {
 
-        function startDrawing(e) {
-            e.preventDefault();
-            isDrawing = true;
-            saveStrokeState();
-            draw(e);
-        }
+            const p =
+                getPosition(e);
 
-        function draw(e) {
-            if (!isDrawing) return;
-            e.preventDefault();
+            outlinePoints.push(p);
 
-            const pos = getCanvasCoordinates(e);
+            maskCtx.lineWidth =
+                5;
 
-            maskCtx.lineWidth = brushRadius;
-            maskCtx.lineCap = 'round';
-            maskCtx.lineJoin = 'round';
-            maskCtx.strokeStyle = 'rgba(244, 114, 182, 0.7)';
+            maskCtx.lineCap =
+                "round";
 
-            maskCtx.lineTo(pos.x, pos.y);
+            maskCtx.strokeStyle =
+                "rgba(236,72,153,.85)";
+
+            maskCtx.lineTo(
+                p.x,
+                p.y
+            );
+
             maskCtx.stroke();
+
             maskCtx.beginPath();
-            maskCtx.moveTo(pos.x, pos.y);
+
+            maskCtx.moveTo(
+                p.x,
+                p.y
+            );
+
+        } else {
+
+            drawBrush(e);
+
         }
 
-        function stopDrawing() {
-            if (!isDrawing) return;
-            isDrawing = false;
-            maskCtx.beginPath();
+    }
+);
+
+
+/* =====================================================
+POINTER END
+===================================================== */
+
+maskCanvas.addEventListener(
+    "pointerup",
+    function(e) {
+
+        if (!drawing)
+            return;
+
+        drawing = false;
+
+        if (
+            selectionMode ===
+            "outline"
+        ) {
+
+            finishOutline();
+
         }
 
-        function saveStrokeState() {
-            strokeHistory.push(maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height));
-        }
+    }
+);
 
-        function undoMask() {
-            if (strokeHistory.length > 0) {
-                const prev = strokeHistory.pop();
-                maskCtx.putImageData(prev, 0, 0);
-            }
-        }
 
-        function clearMask() {
-            maskCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
-            strokeHistory = [];
-        }
+maskCanvas.addEventListener(
+    "pointercancel",
+    function() {
 
-        async function processImage() {
-            if (!currentImage) return;
+        drawing = false;
 
-            loadingOverlay.style.display = 'flex';
+    }
+);
 
-            const imageBlob = await new Promise(resolve => imageCanvas.toBlob(resolve, 'image/jpeg', 0.98));
 
-            const tempMaskCanvas = document.createElement('canvas');
-            tempMaskCanvas.width = maskCanvas.width;
-            tempMaskCanvas.height = maskCanvas.height;
-            const tempCtx = tempMaskCanvas.getContext('2d');
+/* =====================================================
+BRUSH DRAW
+===================================================== */
 
-            tempCtx.fillStyle = '#000000';
-            tempCtx.fillRect(0, 0, tempMaskCanvas.width, tempMaskCanvas.height);
+function drawBrush(e) {
 
-            const paintedData = maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
-            const pixels = paintedData.data;
+    const p =
+        getPosition(e);
 
-            for (let i = 0; i < pixels.length; i += 4) {
-                if (pixels[i + 3] > 0) {
-                    pixels[i] = 255;
-                    pixels[i + 1] = 255;
-                    pixels[i + 2] = 255;
-                    pixels[i + 3] = 255;
+    const size =
+        Number(
+            brushSize.value
+        );
+
+    maskCtx.fillStyle =
+        "rgba(236,72,153,.65)";
+
+    maskCtx.beginPath();
+
+    maskCtx.arc(
+        p.x,
+        p.y,
+        size / 2,
+        0,
+        Math.PI * 2
+    );
+
+    maskCtx.fill();
+
+}
+
+
+/* =====================================================
+SMART OUTLINE
+===================================================== */
+
+function finishOutline() {
+
+    if (
+        outlinePoints.length <
+        3
+    ) {
+
+        return;
+
+    }
+
+    // Close polygon
+    const first =
+        outlinePoints[0];
+
+    maskCtx.lineTo(
+        first.x,
+        first.y
+    );
+
+    maskCtx.closePath();
+
+    // Fill the inside
+    maskCtx.fillStyle =
+        "rgba(236,72,153,.35)";
+
+    maskCtx.fill();
+
+    // Strong visible border
+    maskCtx.beginPath();
+
+    maskCtx.moveTo(
+        first.x,
+        first.y
+    );
+
+    for (
+        let i = 1;
+        i < outlinePoints.length;
+        i++
+    ) {
+
+        maskCtx.lineTo(
+            outlinePoints[i].x,
+            outlinePoints[i].y
+        );
+
+    }
+
+    maskCtx.closePath();
+
+    maskCtx.lineWidth =
+        5;
+
+    maskCtx.strokeStyle =
+        "rgba(236,72,153,.9)";
+
+    maskCtx.stroke();
+
+    saveHistory();
+
+}
+
+
+/* =====================================================
+HISTORY
+===================================================== */
+
+function saveHistory() {
+
+    history.push(
+        maskCtx.getImageData(
+            0,
+            0,
+            maskCanvas.width,
+            maskCanvas.height
+        )
+    );
+
+    if (
+        history.length >
+        15
+    ) {
+
+        history.shift();
+
+    }
+
+}
+
+
+/* =====================================================
+UNDO
+===================================================== */
+
+function undoMask() {
+
+    if (
+        history.length ===
+        0
+    ) {
+
+        clearMask();
+
+        return;
+
+    }
+
+    const previous =
+        history.pop();
+
+    maskCtx.putImageData(
+        previous,
+        0,
+        0
+    );
+
+}
+
+
+/* =====================================================
+CLEAR
+===================================================== */
+
+function clearMask() {
+
+    maskCtx.clearRect(
+        0,
+        0,
+        maskCanvas.width,
+        maskCanvas.height
+    );
+
+    history = [];
+
+    outlinePoints = [];
+
+    resultImage.style.display =
+        "none";
+
+    downloadBtn.style.display =
+        "none";
+
+    document
+        .getElementById(
+            "resultPlaceholder"
+        )
+        .style.display =
+        "block";
+
+}
+
+
+/* =====================================================
+CREATE MASK
+===================================================== */
+
+function createMaskBlob() {
+
+    return new Promise(
+        function(resolve) {
+
+            const mask =
+                document.createElement(
+                    "canvas"
+                );
+
+            mask.width =
+                maskCanvas.width;
+
+            mask.height =
+                maskCanvas.height;
+
+            const ctx =
+                mask.getContext(
+                    "2d"
+                );
+
+            ctx.fillStyle =
+                "black";
+
+            ctx.fillRect(
+                0,
+                0,
+                mask.width,
+                mask.height
+            );
+
+            const pixels =
+                maskCtx.getImageData(
+                    0,
+                    0,
+                    maskCanvas.width,
+                    maskCanvas.height
+                );
+
+            const data =
+                pixels.data;
+
+            for (
+                let i = 0;
+                i < data.length;
+                i += 4
+            ) {
+
+                if (
+                    data[i + 3] >
+                    10
+                ) {
+
+                    data[i] =
+                        255;
+
+                    data[i + 1] =
+                        255;
+
+                    data[i + 2] =
+                        255;
+
+                    data[i + 3] =
+                        255;
+
                 }
+
             }
 
-            const offCanvas = document.createElement('canvas');
-            offCanvas.width = maskCanvas.width;
-            offCanvas.height = maskCanvas.height;
-            offCanvas.getContext('2d').putImageData(paintedData, 0, 0);
+            ctx.putImageData(
+                pixels,
+                0,
+                0
+            );
 
-            tempCtx.drawImage(offCanvas, 0, 0);
+            mask.toBlob(
+                function(blob) {
 
-            const maskBlob = await new Promise(resolve => tempMaskCanvas.toBlob(resolve, 'image/png'));
+                    resolve(blob);
 
-            const formData = new FormData();
-            formData.append('image', imageBlob, 'image.jpg');
-            formData.append('mask', maskBlob, 'mask.png');
-            formData.append('method', selectedMethod);
+                },
+                "image/png"
+            );
+
+        }
+    );
+
+}
+
+
+/* =====================================================
+PROCESS
+===================================================== */
+
+async function processImage() {
+
+    if (!currentImage)
+        return;
+
+    loader.style.display =
+        "flex";
+
+    processBtn.disabled =
+        true;
+
+    if (
+        selectedMethod ===
+        "ai"
+    ) {
+
+        loaderText.innerText =
+            "🤖 AI is rebuilding the background...";
+
+    } else {
+
+        loaderText.innerText =
+            "⚡ Removing object...";
+
+    }
+
+    try {
+
+        const imageBlob =
+            await new Promise(
+                resolve =>
+                    imageCanvas.toBlob(
+                        resolve,
+                        "image/jpeg",
+                        .97
+                    )
+            );
+
+        const maskBlob =
+            await createMaskBlob();
+
+        const formData =
+            new FormData();
+
+        formData.append(
+            "image",
+            imageBlob,
+            "image.jpg"
+        );
+
+        formData.append(
+            "mask",
+            maskBlob,
+            "mask.png"
+        );
+
+        formData.append(
+            "method",
+            selectedMethod
+        );
+
+        formData.append(
+            "selection_mode",
+            selectionMode
+        );
+
+        const response =
+            await fetch(
+                "/process",
+                {
+                    method:
+                        "POST",
+                    body:
+                        formData
+                }
+            );
+
+        if (!response.ok) {
+
+            let message =
+                "Processing failed.";
 
             try {
-                const response = await fetch('/process', {
-                    method: 'POST',
-                    body: formData
-                });
 
-                if (!response.ok) {
-                    const err = await response.json();
-                    alert(err.error || 'Failed to process image');
-                    loadingOverlay.style.display = 'none';
-                    return;
+                const data =
+                    await response.json();
+
+                message =
+                    data.error ||
+                    message;
+
+                if (
+                    data.details
+                ) {
+
+                    message +=
+                        "\n" +
+                        data.details;
+
                 }
 
-                const resultBlob = await response.blob();
-                const resultUrl = URL.createObjectURL(resultBlob);
+            } catch {}
 
-                resultImage.src = resultUrl;
-                resultImage.style.display = 'block';
-                document.getElementById('placeholderRight').style.display = 'none';
+            throw new Error(
+                message
+            );
 
-                downloadBtn.href = resultUrl;
-                downloadBtn.style.display = 'flex';
-
-            } catch (error) {
-                alert('Connection error or processing timeout.');
-            } finally {
-                loadingOverlay.style.display = 'none';
-            }
         }
-    </script>
+
+        const blob =
+            await response.blob();
+
+        const url =
+            URL.createObjectURL(
+                blob
+            );
+
+        resultImage.src =
+            url;
+
+        resultImage.style.display =
+            "block";
+
+        document
+            .getElementById(
+                "resultPlaceholder"
+            )
+            .style.display =
+            "none";
+
+        downloadBtn.href =
+            url;
+
+        downloadBtn.style.display =
+            "block";
+
+    } catch (error) {
+
+        alert(
+            error.message
+        );
+
+    } finally {
+
+        loader.style.display =
+            "none";
+
+        processBtn.disabled =
+            false;
+
+    }
+
+}
+
+</script>
+
 </body>
+
 </html>
