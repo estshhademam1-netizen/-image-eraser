@@ -296,7 +296,7 @@
             display: block;
             max-width: 100%;
             max-height: 600px;
-            object-contain: fit;
+            object-fit: contain;
         }
 
         #maskCanvas {
@@ -488,13 +488,11 @@
     <script>
         lucide.createIcons();
 
-        // Canvas Elements
         const imageCanvas = document.getElementById('imageCanvas');
         const maskCanvas = document.getElementById('maskCanvas');
         const imgCtx = imageCanvas.getContext('2d');
         const maskCtx = maskCanvas.getContext('2d');
 
-        // UI Controls
         const imageLoader = document.getElementById('imageLoader');
         const brushSize = document.getElementById('brushSize');
         const brushSizeVal = document.getElementById('brushSizeVal');
@@ -509,14 +507,12 @@
         let brushRadius = 40;
         let strokeHistory = [];
 
-        // Method Selection
         function setMethod(method) {
             selectedMethod = method;
             document.getElementById('aiCard').classList.toggle('active', method === 'ai');
             document.getElementById('classicCard').classList.toggle('active', method === 'classic');
         }
 
-        // Image Upload
         imageLoader.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
@@ -533,30 +529,24 @@
         });
 
         function initCanvas() {
-            // Set dimensions to natural image size
             imageCanvas.width = currentImage.naturalWidth;
             imageCanvas.height = currentImage.naturalHeight;
             maskCanvas.width = currentImage.naturalWidth;
             maskCanvas.height = currentImage.naturalHeight;
 
-            // Draw image on canvas
             imgCtx.drawImage(currentImage, 0, 0);
-
             clearMask();
 
-            // Toggle visibility
             document.getElementById('placeholderLeft').style.display = 'none';
             document.getElementById('canvasWrapper').style.display = 'inline-block';
             processBtn.disabled = false;
         }
 
-        // Brush Settings
         brushSize.addEventListener('input', (e) => {
             brushRadius = e.target.value;
             brushSizeVal.innerText = `${brushRadius} px`;
         });
 
-        // Precision Coordinate Mapping (Fixes Drawing Mismatch)
         function getCanvasCoordinates(e) {
             const rect = maskCanvas.getBoundingClientRect();
             const scaleX = maskCanvas.width / rect.width;
@@ -576,7 +566,6 @@
             };
         }
 
-        // Mouse & Touch Listeners
         maskCanvas.addEventListener('mousedown', startDrawing);
         maskCanvas.addEventListener('mousemove', draw);
         window.addEventListener('mouseup', stopDrawing);
@@ -601,7 +590,7 @@
             maskCtx.lineWidth = brushRadius;
             maskCtx.lineCap = 'round';
             maskCtx.lineJoin = 'round';
-            maskCtx.strokeStyle = 'rgba(244, 114, 182, 0.65)'; // Soft Glowing Pink
+            maskCtx.strokeStyle = 'rgba(244, 114, 182, 0.7)';
 
             maskCtx.lineTo(pos.x, pos.y);
             maskCtx.stroke();
@@ -631,16 +620,13 @@
             strokeHistory = [];
         }
 
-        // Execute Processing
         async function processImage() {
             if (!currentImage) return;
 
             loadingOverlay.style.display = 'flex';
 
-            // Convert Base Image to Blob
-            const imageBlob = await new Promise(resolve => imageCanvas.toBlob(resolve, 'image/jpeg', 0.95));
+            const imageBlob = await new Promise(resolve => imageCanvas.toBlob(resolve, 'image/jpeg', 0.98));
 
-            // Generate Binary Black & White Mask
             const tempMaskCanvas = document.createElement('canvas');
             tempMaskCanvas.width = maskCanvas.width;
             tempMaskCanvas.height = maskCanvas.height;
@@ -670,7 +656,6 @@
 
             const maskBlob = await new Promise(resolve => tempMaskCanvas.toBlob(resolve, 'image/png'));
 
-            // Send via Multipart Form Data
             const formData = new FormData();
             formData.append('image', imageBlob, 'image.jpg');
             formData.append('mask', maskBlob, 'mask.png');
