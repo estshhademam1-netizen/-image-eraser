@@ -10,6 +10,7 @@ from flask import Flask, jsonify, render_template, request, send_file
 
 app = Flask(__name__)
 
+# Maximum uploaded file size: 16 MB
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
 
 
@@ -28,36 +29,22 @@ lama_net = None
 
 
 def get_lama_model():
-
     global lama_net
 
     if lama_net is not None:
         return lama_net
 
     if not os.path.exists(MODEL_PATH):
-
         print("Downloading LaMa model...")
-
-        urllib.request.urlretrieve(
-            MODEL_URL,
-            MODEL_PATH
-        )
-
+        urllib.request.urlretrieve(MODEL_URL, MODEL_PATH)
         print("LaMa model downloaded.")
 
     print("Loading LaMa model...")
 
-    lama_net = cv2.dnn.readNetFromONNX(
-        MODEL_PATH
-    )
+    lama_net = cv2.dnn.readNetFromONNX(MODEL_PATH)
 
-    lama_net.setPreferableBackend(
-        cv2.dnn.DNN_BACKEND_OPENCV
-    )
-
-    lama_net.setPreferableTarget(
-        cv2.dnn.DNN_TARGET_CPU
-    )
+    lama_net.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
+    lama_net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
 
     print("LaMa model ready.")
 
@@ -65,42 +52,56 @@ def get_lama_model():
 
 
 # =========================================================
-# FILE DECODING
+# IMAGE DECODING
 # =========================================================
 
 def decode_image(file):
-
     data = file.read()
 
     if not data:
         return None
 
-    array = np.frombuffer(
-        data,
-        dtype=np.uint8
-    )
+    arr = np.frombuffer(data, dtype=np.uint8)
 
-    return cv2.imdecode(
-        array,
-        cv2.IMREAD_COLOR
-    )
+    return cv2.imdecode(arr, cv2.IMREAD_COLOR)
 
 
 def decode_mask(file):
-
     data = file.read()
 
     if not data:
         return None
 
-    array = np.frombuffer(
-        data,
-        dtype=np.uint8
-    )
+    arr = np.frombuffer(data, dtype=np.uint8)
 
-    return cv2.imdecode(
-        array,
-        cv2.IMREAD_GRAYSCALE
+    return cv2.imdecode(arr, cv2.IMREAD_GRAYSCALE)
+
+
+# =========================================================
+# IMAGE SIZE CONTROL
+# =========================================================
+
+def limit_image_size(image, max_side=2200):
+    """
+    Keeps very large phone photos from consuming too much RAM.
+    """
+
+    h, w = image.shape[:2]
+
+    largest = max(h, w)
+
+    if largest <= max_side:
+        return image
+
+    scale = max_side / float(largest)
+
+    new_w = max(1, int(w * scale))
+    new_h = max(1, int(h * scale))
+
+    return cv2.resize(
+        image,
+        (new_w, new_h),
+        interpolation=cv2.INTER_AREA
     )
 
 
@@ -108,35 +109,47 @@ def decode_mask(file):
 # MASK CLEANING
 # =========================================================
 
-def clean_mask(mask, mode):
+def prepare_mask(mask, mode="lasso"):
+    """
+    Converts the user's selection into a clean binary mask.
 
-    # Binary
+    White = remove this area
+    Black = keep this area
+    """
+
+    if mask is None:
+        raise ValueError("Mask is missing.")
+
+    # Binary mask
     _, mask = cv2.threshold(
         mask,
-        10,
+        20,
         255,
         cv2.THRESH_BINARY
     )
 
-    # -----------------------------------------------------
-    # OUTLINE MODE
-    #
-    # The frontend already closes/fills the polygon.
-    # Here we simply clean it.
-    # -----------------------------------------------------
+    if cv2.countNonZero(mask) == 0:
+        raise ValueError("No selection found.")
 
-    if mode == "outline":
+    # Small closing to remove tiny holes/gaps
+    close_kernel = cv2.getStructuringElement(
+        cv2.MORPH_ELLIPSE,
+        (5, 5)
+    )
 
+    mask = cv2.morphologyEx(
+        mask,
+        cv2.MORPH_CLOSE,
+        close_kernel,
+        iterations=1
+    )
+
+    # For brush selections we expand slightly.
+    # For lasso selections, don't destroy the user's boundary.
+    if mode == "brush":
         kernel = cv2.getStructuringElement(
             cv2.MORPH_ELLIPSE,
             (5, 5)
-        )
-
-        mask = cv2.morphologyEx(
-            mask,
-            cv2.MORPH_CLOSE,
-            kernel,
-            iterations=2
         )
 
         mask = cv2.dilate(
@@ -145,158 +158,136 @@ def clean_mask(mask, mode):
             iterations=1
         )
 
-        return mask
-
-    # -----------------------------------------------------
-    # BRUSH MODE
-    # -----------------------------------------------------
-
-    kernel = cv2.getStructuringElement(
-        cv2.MORPH_ELLIPSE,
-        (5, 5)
-    )
-
-    mask = cv2.morphologyEx(
-        mask,
-        cv2.MORPH_CLOSE,
-        kernel,
-        iterations=1
-    )
-
-    mask = cv2.dilate(
-        mask,
-        kernel,
-        iterations=1
-    )
-
     return mask
 
 
 # =========================================================
-# GET CROP AROUND OBJECT
+# FIND OBJECT REGION
 # =========================================================
 
-def get_object_crop(image, mask):
+def get_selection_box(mask, image_shape):
+    """
+    Finds the exact region containing the selected object,
+    then adds background context around it.
+    """
 
     points = cv2.findNonZero(mask)
 
     if points is None:
+        raise ValueError("No selected area found.")
 
-        raise ValueError(
-            "No selected object."
-        )
+    x, y, w, h = cv2.boundingRect(points)
 
-    x, y, w, h = cv2.boundingRect(
-        points
-    )
+    image_h, image_w = image_shape[:2]
 
-    image_h, image_w = image.shape[:2]
+    # Context around object.
+    # More context = better background reconstruction.
+    largest_object_dimension = max(w, h)
 
-    # More context around the selected object
     padding = max(
         80,
-        int(max(w, h) * 0.55)
+        int(largest_object_dimension * 0.75)
     )
 
-    x1 = max(
-        0,
-        x - padding
-    )
+    x1 = max(0, x - padding)
+    y1 = max(0, y - padding)
 
-    y1 = max(
-        0,
-        y - padding
-    )
+    x2 = min(image_w, x + w + padding)
+    y2 = min(image_h, y + h + padding)
 
-    x2 = min(
-        image_w,
-        x + w + padding
-    )
-
-    y2 = min(
-        image_h,
-        y + h + padding
-    )
-
-    crop = image[
-        y1:y2,
-        x1:x2
-    ].copy()
-
-    crop_mask = mask[
-        y1:y2,
-        x1:x2
-    ].copy()
-
-    return (
-        crop,
-        crop_mask,
-        x1,
-        y1,
-        x2,
-        y2
-    )
+    return x1, y1, x2, y2
 
 
 # =========================================================
-# AI LAMA
+# AI INPAINTING
 # =========================================================
 
-def ai_inpaint(image, mask, mode):
+def ai_inpaint(image, mask):
+    """
+    AI removal using OpenCV LaMa.
 
-    mask = clean_mask(
-        mask,
-        mode
+    Important:
+    LaMa processes a contextual crop,
+    but ONLY the selected mask is pasted back.
+    """
+
+    clean_mask = prepare_mask(mask, "lasso")
+
+    x1, y1, x2, y2 = get_selection_box(
+        clean_mask,
+        image.shape
     )
 
-    (
-        crop,
-        crop_mask,
-        x1,
-        y1,
-        x2,
-        y2
-    ) = get_object_crop(
-        image,
-        mask
-    )
+    crop = image[y1:y2, x1:x2].copy()
+    crop_mask = clean_mask[y1:y2, x1:x2].copy()
 
     crop_h, crop_w = crop.shape[:2]
 
-    print(
-        "AI crop:",
-        crop_w,
-        "x",
-        crop_h
-    )
+    if crop_h < 2 or crop_w < 2:
+        raise ValueError("Selection is too small.")
 
     # -----------------------------------------------------
-    # Resize to LaMa input
+    # Make a square context area.
+    # This gives LaMa background information around object.
+    # -----------------------------------------------------
+
+    square_size = max(crop_h, crop_w)
+
+    center_x = (crop_w // 2)
+    center_y = (crop_h // 2)
+
+    half = square_size // 2
+
+    sx1 = max(0, center_x - half)
+    sy1 = max(0, center_y - half)
+
+    sx2 = min(crop_w, sx1 + square_size)
+    sy2 = min(crop_h, sy1 + square_size)
+
+    # Correct boundary
+    sx1 = max(0, sx2 - square_size)
+    sy1 = max(0, sy2 - square_size)
+
+    square_crop = crop[sy1:sy2, sx1:sx2]
+    square_mask = crop_mask[sy1:sy2, sx1:sx2]
+
+    if square_crop.size == 0:
+        raise ValueError("Invalid AI crop.")
+
+    # -----------------------------------------------------
+    # Resize to LaMa's expected 512x512 input.
     # -----------------------------------------------------
 
     ai_image = cv2.resize(
-        crop,
+        square_crop,
         (512, 512),
         interpolation=cv2.INTER_AREA
     )
 
     ai_mask = cv2.resize(
-        crop_mask,
+        square_mask,
         (512, 512),
         interpolation=cv2.INTER_NEAREST
     )
 
+    # Ensure binary mask
+    ai_mask = np.where(
+        ai_mask > 0,
+        255,
+        0
+    ).astype(np.uint8)
+
     # -----------------------------------------------------
-    # Official LaMa preprocessing
+    # LaMa input
     # -----------------------------------------------------
 
     image_blob = cv2.dnn.blobFromImage(
         ai_image,
-        0.00392,
-        (512, 512),
-        (0, 0, 0),
-        False,
-        False
+        scalefactor=1.0 / 255.0,
+        size=(512, 512),
+        mean=(0, 0, 0),
+        swapRB=False,
+        crop=False
     )
 
     mask_blob = cv2.dnn.blobFromImage(
@@ -310,12 +301,10 @@ def ai_inpaint(image, mask, mode):
 
     mask_blob = (
         mask_blob > 0
-    ).astype(
-        np.float32
-    )
+    ).astype(np.float32)
 
     # -----------------------------------------------------
-    # Model
+    # Run AI
     # -----------------------------------------------------
 
     net = get_lama_model()
@@ -332,10 +321,6 @@ def ai_inpaint(image, mask, mode):
 
     output = net.forward()
 
-    # -----------------------------------------------------
-    # Official LaMa postprocessing
-    # -----------------------------------------------------
-
     result = output[0]
 
     result = np.transpose(
@@ -343,62 +328,75 @@ def ai_inpaint(image, mask, mode):
         (1, 2, 0)
     )
 
-    result = result.astype(
-        np.uint8
-    )
-
-    # Resize back
-    result = cv2.resize(
+    # OpenCV LaMa model outputs 0-255
+    result = np.clip(
         result,
-        (crop_w, crop_h),
-        interpolation=cv2.INTER_CUBIC
+        0,
+        255
+    ).astype(np.uint8)
+
+    # -----------------------------------------------------
+    # Resize AI result back to contextual crop.
+    # -----------------------------------------------------
+
+    generated_square = cv2.resize(
+        result,
+        (square_crop.shape[1], square_crop.shape[0]),
+        interpolation=cv2.INTER_LANCZOS4
     )
 
     # -----------------------------------------------------
-    # Smooth edge
+    # IMPORTANT:
+    # Only replace the selected mask.
+    # Everything outside it stays ORIGINAL.
     # -----------------------------------------------------
 
-    soft_mask = cv2.GaussianBlur(
-        crop_mask,
+    original_float = square_crop.astype(np.float32)
+    generated_float = generated_square.astype(np.float32)
+
+    binary = (
+        square_mask > 0
+    ).astype(np.float32)
+
+    # Small soft edge to avoid a hard seam.
+    soft = cv2.GaussianBlur(
+        binary,
         (9, 9),
         0
     )
 
-    soft_mask = (
-        soft_mask.astype(
-            np.float32
-        ) / 255.0
-    )
-
-    soft_mask = soft_mask[
-        ...,
-        np.newaxis
-    ]
-
-    original = crop.astype(
-        np.float32
-    )
-
-    generated = result.astype(
-        np.float32
-    )
+    # Keep the inside strongly selected.
+    soft = np.clip(
+        soft,
+        0.0,
+        1.0
+    )[..., None]
 
     blended = (
-        generated * soft_mask
+        generated_float * soft
         +
-        original * (1.0 - soft_mask)
+        original_float * (1.0 - soft)
     )
 
     blended = np.clip(
         blended,
         0,
         255
-    ).astype(
-        np.uint8
-    )
+    ).astype(np.uint8)
 
     # -----------------------------------------------------
-    # Put crop back
+    # Put generated patch into crop.
+    # -----------------------------------------------------
+
+    crop_result = crop.copy()
+
+    crop_result[
+        sy1:sy2,
+        sx1:sx2
+    ] = blended
+
+    # -----------------------------------------------------
+    # Put ONLY this contextual patch back into original.
     # -----------------------------------------------------
 
     final_image = image.copy()
@@ -406,59 +404,50 @@ def ai_inpaint(image, mask, mode):
     final_image[
         y1:y2,
         x1:x2
-    ] = blended
+    ] = crop_result
 
     return final_image
 
 
 # =========================================================
-# CLASSIC
+# CLASSIC INPAINTING
 # =========================================================
 
-def classic_inpaint(image, mask, mode):
+def classic_inpaint(image, mask):
+    """
+    Fast OpenCV inpainting.
+    """
 
-    mask = clean_mask(
+    clean_mask = prepare_mask(
         mask,
-        mode
+        "brush"
     )
 
     return cv2.inpaint(
         image,
-        mask,
-        7,
+        clean_mask,
+        5,
         cv2.INPAINT_TELEA
     )
 
 
 # =========================================================
-# ROUTES
+# PROCESS ROUTE
 # =========================================================
 
-@app.route("/")
-def index():
-
-    return render_template(
-        "index.html"
-    )
-
-
-@app.route(
-    "/process",
-    methods=["POST"]
-)
+@app.route("/process", methods=["POST"])
 def process_image():
 
     try:
 
-        if (
-            "image" not in request.files
-            or
-            "mask" not in request.files
-        ):
-
+        if "image" not in request.files:
             return jsonify({
-                "error":
-                "Image or mask is missing."
+                "error": "Image is missing."
+            }), 400
+
+        if "mask" not in request.files:
+            return jsonify({
+                "error": "Mask is missing."
             }), 400
 
         image = decode_image(
@@ -470,39 +459,36 @@ def process_image():
         )
 
         if image is None:
-
             return jsonify({
-                "error":
-                "Could not read image."
+                "error": "Could not read image."
             }), 400
 
         if mask is None:
-
             return jsonify({
-                "error":
-                "Could not read mask."
+                "error": "Could not read mask."
             }), 400
 
-        # Match mask to image
-        if (
-            mask.shape[:2]
-            != image.shape[:2]
-        ):
+        # Keep memory reasonable on Render
+        original_h, original_w = image.shape[:2]
 
-            mask = cv2.resize(
-                mask,
-                (
-                    image.shape[1],
-                    image.shape[0]
-                ),
-                interpolation=cv2.INTER_NEAREST
-            )
+        image = limit_image_size(
+            image,
+            2200
+        )
+
+        # Resize mask to current image size
+        mask = cv2.resize(
+            mask,
+            (
+                image.shape[1],
+                image.shape[0]
+            ),
+            interpolation=cv2.INTER_NEAREST
+        )
 
         if cv2.countNonZero(mask) == 0:
-
             return jsonify({
-                "error":
-                "Please select an object first."
+                "error": "Please select an object first."
             }), 400
 
         method = request.form.get(
@@ -510,40 +496,41 @@ def process_image():
             "ai"
         )
 
-        mode = request.form.get(
+        selection_mode = request.form.get(
             "selection_mode",
-            "brush"
+            "lasso"
         )
 
         print(
-            "Method:",
-            method,
-            "| Selection:",
-            mode
+            f"Processing: method={method}, "
+            f"selection={selection_mode}, "
+            f"image={image.shape}"
         )
 
         # -------------------------------------------------
-        # PROCESS
+        # AI
         # -------------------------------------------------
 
         if method == "ai":
 
             result = ai_inpaint(
                 image,
-                mask,
-                mode
+                mask
             )
+
+        # -------------------------------------------------
+        # CLASSIC
+        # -------------------------------------------------
 
         else:
 
             result = classic_inpaint(
                 image,
-                mask,
-                mode
+                mask
             )
 
         # -------------------------------------------------
-        # JPEG
+        # JPEG response
         # -------------------------------------------------
 
         success, encoded = cv2.imencode(
@@ -556,11 +543,9 @@ def process_image():
         )
 
         if not success:
-
-            return jsonify({
-                "error":
-                "Could not create result."
-            }), 500
+            raise ValueError(
+                "Could not encode result."
+            )
 
         return send_file(
             io.BytesIO(
@@ -568,7 +553,7 @@ def process_image():
             ),
             mimetype="image/jpeg",
             as_attachment=False,
-            download_name="cleaned_image.jpg"
+            download_name="erased_result.jpg"
         )
 
     except Exception as e:
@@ -579,21 +564,24 @@ def process_image():
         )
 
         return jsonify({
-            "error":
-            "Processing failed.",
-            "details":
-            str(e)
+            "error": str(e)
         }), 500
 
 
-@app.errorhandler(413)
-def too_large(error):
+# =========================================================
+# HOME
+# =========================================================
 
-    return jsonify({
-        "error":
-        "Image is too large. Maximum 16 MB."
-    }), 413
+@app.route("/")
+def index():
+    return render_template(
+        "index.html"
+    )
 
+
+# =========================================================
+# RUN
+# =========================================================
 
 if __name__ == "__main__":
 
