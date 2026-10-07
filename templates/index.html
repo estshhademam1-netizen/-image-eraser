@@ -1,325 +1,710 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Magic Photo Eraser ✨💖</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --primary: #ff758c;
-      --secondary: #ff7eb3;
-      --bg-gradient: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #feada6 100%);
-      --card-bg: rgba(255, 255, 255, 0.9);
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resimden İlgisiz Nesne Silme - Aesthetic Eraser Studio</title>
+    
+    <!-- Google Fonts & Lucide Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
 
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: var(--bg-gradient);
-      min-height: 100vh;
-      margin: 0;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      color: #4a4a4a;
-    }
+    <style>
+        :root {
+            --bg-color: #fdf2f8;
+            --card-bg: #ffffff;
+            --primary-pink: #f472b6;
+            --primary-hover: #ec4899;
+            --soft-pink: #fbcfe8;
+            --accent-purple: #c084fc;
+            --text-dark: #475569;
+            --border-color: #fce7f3;
+        }
 
-    .container {
-      background: var(--card-bg);
-      backdrop-filter: blur(10px);
-      border-radius: 25px;
-      padding: 30px;
-      box-shadow: 0 15px 35px rgba(255, 117, 140, 0.25);
-      width: 100%;
-      max-width: 900px;
-      text-align: center;
-      border: 2px solid #ffffff;
-    }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
 
-    h1 {
-      color: #d83a56;
-      font-size: 2.2rem;
-      margin-bottom: 5px;
-    }
+        body {
+            background-color: var(--bg-color);
+            background-image: radial-gradient(#fbcfe8 1px, transparent 1px);
+            background-size: 24px 24px;
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
 
-    p.subtitle {
-      color: #884466;
-      font-size: 0.95rem;
-      margin-bottom: 25px;
-    }
+        /* Top Header */
+        header {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 2px solid var(--border-color);
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
 
-    .toolbar {
-      display: flex;
-      justify-content: center;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-bottom: 20px;
-      background: #fff0f5;
-      padding: 15px;
-      border-radius: 20px;
-    }
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
 
-    .btn {
-      background: linear-gradient(45deg, var(--primary), var(--secondary));
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 50px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 12px rgba(255, 117, 140, 0.3);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
+        .logo-icon {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, var(--primary-pink), var(--accent-purple));
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            box-shadow: 0 8px 16px rgba(244, 114, 182, 0.3);
+        }
 
-    .btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 18px rgba(255, 117, 140, 0.45);
-    }
+        .logo-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #db2777, #9333ea);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
 
-    .btn.active {
-      outline: 3px solid #d83a56;
-      background: #d83a56;
-    }
+        /* Main Workspace Layout */
+        .workspace {
+            flex: 1;
+            display: flex;
+            gap: 24px;
+            padding: 24px 32px;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+        }
 
-    .btn-secondary {
-      background: #ffffff;
-      color: #d83a56;
-      border: 2px solid #ffb6c1;
-    }
+        /* Control Panel (Sidebar) */
+        .sidebar {
+            width: 320px;
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 24px;
+            border: 2px solid var(--border-color);
+            box-shadow: 0 10px 25px rgba(244, 114, 182, 0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            height: fit-content;
+        }
 
-    .canvas-wrapper {
-      position: relative;
-      margin: 20px auto;
-      border-radius: 20px;
-      overflow: hidden;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-      background: #fff;
-      display: inline-block;
-      max-width: 100%;
-    }
+        .panel-section-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+            margin-bottom: 8px;
+        }
 
-    canvas {
-      display: block;
-      max-width: 100%;
-      height: auto;
-      cursor: crosshair;
-    }
+        .upload-btn-label {
+            background: var(--bg-color);
+            border: 2px dashed var(--primary-pink);
+            border-radius: 18px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            color: var(--primary-hover);
+            font-weight: 600;
+        }
 
-    #resultContainer {
-      margin-top: 25px;
-      display: none;
-      animation: fadeIn 0.5s ease-in-out;
-    }
+        .upload-btn-label:hover {
+            background: var(--soft-pink);
+            transform: translateY(-2px);
+        }
 
-    #resultImage {
-      max-width: 100%;
-      border-radius: 20px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-      border: 4px solid #fff;
-    }
+        /* Method Switcher */
+        .method-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
 
-    .status-spinner {
-      display: none;
-      color: #d83a56;
-      font-weight: 600;
-      margin: 15px 0;
-    }
+        .method-card {
+            border: 2px solid var(--border-color);
+            background: #fff;
+            border-radius: 16px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: scale(0.95); }
-      to { opacity: 1; transform: scale(1); }
-    }
-  </style>
+        .method-card.active {
+            border-color: var(--primary-pink);
+            background: #fdf2f8;
+            box-shadow: 0 4px 12px rgba(244, 114, 182, 0.15);
+        }
+
+        .method-card i {
+            color: var(--primary-pink);
+            margin-bottom: 4px;
+        }
+
+        .method-card label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        /* Controls Slider */
+        .slider-box {
+            background: #f8fafc;
+            padding: 14px;
+            border-radius: 16px;
+            border: 1px solid #f1f5f9;
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            accent-color: var(--primary-pink);
+        }
+
+        /* Action Buttons */
+        .action-btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-secondary {
+            flex: 1;
+            background: #f1f5f9;
+            color: #475569;
+            border: none;
+            padding: 12px;
+            border-radius: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+
+        .btn-primary {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary-pink), var(--primary-hover));
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 18px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(244, 114, 182, 0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(244, 114, 182, 0.45);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Dual Display Viewports */
+        .display-area {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .viewport-card {
+            background: var(--card-bg);
+            border-radius: 24px;
+            border: 2px solid var(--border-color);
+            box-shadow: 0 10px 25px rgba(244, 114, 182, 0.05);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            height: 680px;
+        }
+
+        .viewport-header {
+            background: #fdf2f8;
+            padding: 14px 20px;
+            border-bottom: 2px solid var(--border-color);
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--primary-hover);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .viewport-body {
+            flex: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fafafa;
+            overflow: hidden;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            max-width: 100%;
+            max-height: 100%;
+            display: inline-block;
+        }
+
+        canvas {
+            display: block;
+            max-width: 100%;
+            max-height: 600px;
+            object-contain: fit;
+        }
+
+        #maskCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            cursor: crosshair;
+            touch-action: none;
+        }
+
+        .placeholder-text {
+            text-align: center;
+            color: #cbd5e1;
+            font-weight: 500;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* Loader Overlay */
+        .loading-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(4px);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            z-index: 30;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--soft-pink);
+            border-top-color: var(--primary-pink);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 1024px) {
+            .workspace {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+            }
+            .display-area {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
 
-  <div class="container">
-    <h1>Magic Photo Eraser ✨🌸</h1>
-    <p class="subtitle">Upload your picture & effortlessly remove anything!</p>
+    <!-- Header -->
+    <header>
+        <div class="logo-area">
+            <div class="logo-icon">
+                <i data-lucide="wand-2"></i>
+            </div>
+            <div>
+                <div class="logo-title">Resimden İlgisiz Nesne Silme</div>
+            </div>
+        </div>
+        <div style="font-size: 0.85rem; font-weight: 600; color: #a855f7;">✨ Aesthetic AI Studio</div>
+    </header>
 
-    <input type="file" id="uploadInput" accept="image/*" style="display: none;">
-    <button class="btn" style="margin: 0 auto 20px auto;" onclick="document.getElementById('uploadInput').click()">
-      📸 Upload Image
-    </button>
+    <!-- Workspace -->
+    <div class="workspace">
 
-    <div class="toolbar" id="toolbar" style="display: none;">
-      <button class="btn btn-secondary active" id="btnBrush" onclick="setMode('brush')">🖌️ Manual Brush</button>
-      <button class="btn btn-secondary" id="btnMagic" onclick="setMode('magic')">🪄 Magic Auto-Select</button>
-      
-      <label style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #d83a56;">
-        Size: <input type="range" id="brushSize" min="5" max="60" value="25">
-      </label>
+        <!-- Sidebar Panel -->
+        <aside class="sidebar">
+            
+            <!-- Upload -->
+            <div>
+                <div class="panel-section-title">Upload Photo</div>
+                <label for="imageLoader" class="upload-btn-label">
+                    <i data-lucide="image-plus" style="width: 32px; height: 32px;"></i>
+                    <span>Choose an Image</span>
+                </label>
+                <input type="file" id="imageLoader" accept="image/*" style="display: none;">
+            </div>
 
-      <button class="btn btn-secondary" onclick="clearCanvas()">🔄 Reset Selection</button>
-      <button class="btn" onclick="processImage()">✨ Erase & Reveal</button>
+            <!-- Removal Engine -->
+            <div>
+                <div class="panel-section-title">Algorithm</div>
+                <div class="method-grid">
+                    <div class="method-card active" id="aiCard" onclick="setMethod('ai')">
+                        <i data-lucide="sparkles"></i>
+                        <label>AI LaMa</label>
+                    </div>
+                    <div class="method-card" id="classicCard" onclick="setMethod('classic')">
+                        <i data-lucide="zap"></i>
+                        <label>Classic</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Brush Size -->
+            <div>
+                <div class="panel-section-title">Brush Tool</div>
+                <div class="slider-box">
+                    <div class="slider-header">
+                        <span>Brush Size</span>
+                        <span id="brushSizeVal" style="color: var(--primary-pink)">40 px</span>
+                    </div>
+                    <input type="range" id="brushSize" min="5" max="100" value="40">
+                </div>
+            </div>
+
+            <!-- Mask Actions -->
+            <div>
+                <div class="panel-section-title">Actions</div>
+                <div class="action-btn-group">
+                    <button class="btn-secondary" id="undoBtn" onclick="undoMask()">
+                        <i data-lucide="undo-2" style="width: 16px;"></i> Undo
+                    </button>
+                    <button class="btn-secondary" onclick="clearMask()">
+                        <i data-lucide="trash-2" style="width: 16px;"></i> Clear
+                    </button>
+                </div>
+            </div>
+
+            <!-- Execute Button -->
+            <button class="btn-primary" id="processBtn" onclick="processImage()" disabled>
+                <i data-lucide="sparkles"></i> Remove Selected Object
+            </button>
+
+            <!-- Download Button -->
+            <a id="downloadBtn" download="cleaned_image.jpg" class="btn-primary" style="display: none; background: #10b981; text-decoration: none;">
+                <i data-lucide="download"></i> Download Result
+            </a>
+
+        </aside>
+
+        <!-- Viewports Area -->
+        <main class="display-area">
+
+            <!-- Original Image Viewport -->
+            <div class="viewport-card">
+                <div class="viewport-header">
+                    <i data-lucide="image"></i> Original Image (Paint Over Object)
+                </div>
+                <div class="viewport-body" id="originalViewport">
+                    <div class="placeholder-text" id="placeholderLeft">
+                        <i data-lucide="upload-cloud" style="width: 48px; height: 48px;"></i>
+                        <span>Upload an image to start editing</span>
+                    </div>
+                    
+                    <div class="canvas-wrapper" id="canvasWrapper" style="display: none;">
+                        <canvas id="imageCanvas"></canvas>
+                        <canvas id="maskCanvas"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modified Image Viewport -->
+            <div class="viewport-card">
+                <div class="viewport-header">
+                    <i data-lucide="sparkles"></i> Modified Output Image
+                </div>
+                <div class="viewport-body">
+                    <div class="placeholder-text" id="placeholderRight">
+                        <i data-lucide="image" style="width: 48px; height: 48px;"></i>
+                        <span>Modified image will appear here</span>
+                    </div>
+
+                    <img id="resultImage" style="display: none; max-width: 100%; max-height: 600px; object-fit: contain; border-radius: 12px;">
+
+                    <!-- Loader -->
+                    <div class="loading-overlay" id="loadingOverlay">
+                        <div class="spinner"></div>
+                        <div style="font-weight: 700; color: var(--primary-hover);">AI Magic in progress...</div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
     </div>
 
-    <div class="canvas-wrapper" id="canvasWrapper" style="display: none;">
-      <canvas id="imageCanvas"></canvas>
-    </div>
+    <script>
+        lucide.createIcons();
 
-    <div class="status-spinner" id="loadingSpinner">
-      🪄 Magic is happening... Please wait! 💖
-    </div>
+        // Canvas Elements
+        const imageCanvas = document.getElementById('imageCanvas');
+        const maskCanvas = document.getElementById('maskCanvas');
+        const imgCtx = imageCanvas.getContext('2d');
+        const maskCtx = maskCanvas.getContext('2d');
 
-    <div id="resultContainer">
-      <h3 style="color: #d83a56;">✨ Result Magic Reveal ✨</h3>
-      <img id="resultImage" alt="Magic Result">
-      <br><br>
-      <a id="downloadBtn" class="btn" style="display: inline-flex; text-decoration: none;" download="erased_magic.jpg">
-        💖 Download Clean Photo
-      </a>
-    </div>
-  </div>
+        // UI Controls
+        const imageLoader = document.getElementById('imageLoader');
+        const brushSize = document.getElementById('brushSize');
+        const brushSizeVal = document.getElementById('brushSizeVal');
+        const processBtn = document.getElementById('processBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const resultImage = document.getElementById('resultImage');
+        const loadingOverlay = document.getElementById('loadingOverlay');
 
-  <script>
-    const uploadInput = document.getElementById('uploadInput');
-    const canvas = document.getElementById('imageCanvas');
-    const ctx = canvas.getContext('2d');
-    let currentImage = null;
-    let mode = 'brush'; // 'brush' or 'magic'
-    let isDrawing = false;
-    
-    // Hidden canvas for mask layer
-    const maskCanvas = document.createElement('canvas');
-    const maskCtx = maskCanvas.getContext('2d');
+        let currentImage = null;
+        let isDrawing = false;
+        let selectedMethod = 'ai';
+        let brushRadius = 40;
+        let strokeHistory = [];
 
-    uploadInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const img = new Image();
-      img.onload = () => {
-        currentImage = img;
-        canvas.width = img.width;
-        canvas.height = img.height;
-        maskCanvas.width = img.width;
-        maskCanvas.height = img.height;
-
-        render();
-        document.getElementById('toolbar').style.display = 'flex';
-        document.getElementById('canvasWrapper').style.display = 'inline-block';
-        document.getElementById('resultContainer').style.display = 'none';
-      };
-      img.src = URL.createObjectURL(file);
-    });
-
-    function render() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(currentImage, 0, 0);
-
-      // Draw mask overlay with pink glow
-      ctx.save();
-      ctx.globalAlpha = 0.55;
-      ctx.drawImage(maskCanvas, 0, 0);
-      ctx.restore();
-    }
-
-    function setMode(newMode) {
-      mode = newMode;
-      document.getElementById('btnBrush').classList.toggle('active', mode === 'brush');
-      document.getElementById('btnMagic').classList.toggle('active', mode === 'magic');
-    }
-
-    // Drawing Events
-    canvas.addEventListener('mousedown', (e) => {
-      const rect = canvas.getBoundingClientRect();
-      const scaleX = canvas.width / rect.width;
-      const scaleY = canvas.height / rect.height;
-      const x = Math.floor((e.clientX - rect.left) * scaleX);
-      const y = Math.floor((e.clientY - rect.top) * scaleY);
-
-      if (mode === 'brush') {
-        isDrawing = true;
-        drawBrush(x, y);
-      } else if (mode === 'magic') {
-        performMagicSelect(x, y);
-      }
-    });
-
-    canvas.addEventListener('mousemove', (e) => {
-      if (!isDrawing || mode !== 'brush') return;
-      const rect = canvas.getBoundingClientRect();
-      const scaleX = canvas.width / rect.width;
-      const scaleY = canvas.height / rect.height;
-      drawBrush((e.clientX - rect.left) * scaleX, (e.clientY - rect.top) * scaleY);
-    });
-
-    window.addEventListener('mouseup', () => isDrawing = false);
-
-    function drawBrush(x, y) {
-      const size = document.getElementById('brushSize').value;
-      maskCtx.fillStyle = '#ff1493';
-      maskCtx.beginPath();
-      maskCtx.arc(x, y, size / 2, 0, Math.PI * 2);
-      maskCtx.fill();
-      render();
-    }
-
-    function clearCanvas() {
-      maskCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
-      render();
-    }
-
-    async function performMagicSelect(x, y) {
-      document.getElementById('loadingSpinner').style.display = 'block';
-      const file = uploadInput.files[0];
-      const formData = new FormData();
-      formData.append('image', file);
-      formData.append('x', x);
-      formData.append('y', y);
-
-      try {
-        const response = await fetch('/magic-select', { method: 'POST', body: formData });
-        if (!response.ok) throw new Error('Magic select failed');
-        
-        const blob = await response.blob();
-        const maskImg = new Image();
-        maskImg.onload = () => {
-          // Fill mask canvas with the auto-selected region
-          maskCtx.drawImage(maskImg, 0, 0);
-          render();
-          document.getElementById('loadingSpinner').style.display = 'none';
-        };
-        maskImg.src = URL.createObjectURL(blob);
-      } catch (err) {
-        alert(err.message);
-        document.getElementById('loadingSpinner').style.display = 'none';
-      }
-    }
-
-    async function processImage() {
-      document.getElementById('loadingSpinner').style.display = 'block';
-      document.getElementById('resultContainer').style.display = 'none';
-
-      // Convert maskCanvas to Blob
-      maskCanvas.toBlob(async (maskBlob) => {
-        const formData = new FormData();
-        formData.append('image', uploadInput.files[0]);
-        formData.append('mask', maskBlob, 'mask.png');
-        formData.append('method', 'ai');
-
-        try {
-          const res = await fetch('/process', { method: 'POST', body: formData });
-          if (!res.ok) throw new Error('Processing error');
-
-          const resultBlob = await res.blob();
-          const resultUrl = URL.createObjectURL(resultBlob);
-          
-          document.getElementById('resultImage').src = resultUrl;
-          document.getElementById('downloadBtn').href = resultUrl;
-          document.getElementById('resultContainer').style.display = 'block';
-        } catch (e) {
-          alert("Error: " + e.message);
-        } finally {
-          document.getElementById('loadingSpinner').style.display = 'none';
+        // Method Selection
+        function setMethod(method) {
+            selectedMethod = method;
+            document.getElementById('aiCard').classList.toggle('active', method === 'ai');
+            document.getElementById('classicCard').classList.toggle('active', method === 'classic');
         }
-      }, 'image/png');
-    }
-  </script>
+
+        // Image Upload
+        imageLoader.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                currentImage = new Image();
+                currentImage.onload = () => {
+                    initCanvas();
+                };
+                currentImage.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        function initCanvas() {
+            // Set dimensions to natural image size
+            imageCanvas.width = currentImage.naturalWidth;
+            imageCanvas.height = currentImage.naturalHeight;
+            maskCanvas.width = currentImage.naturalWidth;
+            maskCanvas.height = currentImage.naturalHeight;
+
+            // Draw image on canvas
+            imgCtx.drawImage(currentImage, 0, 0);
+
+            clearMask();
+
+            // Toggle visibility
+            document.getElementById('placeholderLeft').style.display = 'none';
+            document.getElementById('canvasWrapper').style.display = 'inline-block';
+            processBtn.disabled = false;
+        }
+
+        // Brush Settings
+        brushSize.addEventListener('input', (e) => {
+            brushRadius = e.target.value;
+            brushSizeVal.innerText = `${brushRadius} px`;
+        });
+
+        // Precision Coordinate Mapping (Fixes Drawing Mismatch)
+        function getCanvasCoordinates(e) {
+            const rect = maskCanvas.getBoundingClientRect();
+            const scaleX = maskCanvas.width / rect.width;
+            const scaleY = maskCanvas.height / rect.height;
+
+            let clientX = e.clientX;
+            let clientY = e.clientY;
+
+            if (e.touches && e.touches.length > 0) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            }
+
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY
+            };
+        }
+
+        // Mouse & Touch Listeners
+        maskCanvas.addEventListener('mousedown', startDrawing);
+        maskCanvas.addEventListener('mousemove', draw);
+        window.addEventListener('mouseup', stopDrawing);
+
+        maskCanvas.addEventListener('touchstart', startDrawing, { passive: false });
+        maskCanvas.addEventListener('touchmove', draw, { passive: false });
+        window.addEventListener('touchend', stopDrawing);
+
+        function startDrawing(e) {
+            e.preventDefault();
+            isDrawing = true;
+            saveStrokeState();
+            draw(e);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            e.preventDefault();
+
+            const pos = getCanvasCoordinates(e);
+
+            maskCtx.lineWidth = brushRadius;
+            maskCtx.lineCap = 'round';
+            maskCtx.lineJoin = 'round';
+            maskCtx.strokeStyle = 'rgba(244, 114, 182, 0.65)'; // Soft Glowing Pink
+
+            maskCtx.lineTo(pos.x, pos.y);
+            maskCtx.stroke();
+            maskCtx.beginPath();
+            maskCtx.moveTo(pos.x, pos.y);
+        }
+
+        function stopDrawing() {
+            if (!isDrawing) return;
+            isDrawing = false;
+            maskCtx.beginPath();
+        }
+
+        function saveStrokeState() {
+            strokeHistory.push(maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height));
+        }
+
+        function undoMask() {
+            if (strokeHistory.length > 0) {
+                const prev = strokeHistory.pop();
+                maskCtx.putImageData(prev, 0, 0);
+            }
+        }
+
+        function clearMask() {
+            maskCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+            strokeHistory = [];
+        }
+
+        // Execute Processing
+        async function processImage() {
+            if (!currentImage) return;
+
+            loadingOverlay.style.display = 'flex';
+
+            // Convert Base Image to Blob
+            const imageBlob = await new Promise(resolve => imageCanvas.toBlob(resolve, 'image/jpeg', 0.95));
+
+            // Generate Binary Black & White Mask
+            const tempMaskCanvas = document.createElement('canvas');
+            tempMaskCanvas.width = maskCanvas.width;
+            tempMaskCanvas.height = maskCanvas.height;
+            const tempCtx = tempMaskCanvas.getContext('2d');
+
+            tempCtx.fillStyle = '#000000';
+            tempCtx.fillRect(0, 0, tempMaskCanvas.width, tempMaskCanvas.height);
+
+            const paintedData = maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
+            const pixels = paintedData.data;
+
+            for (let i = 0; i < pixels.length; i += 4) {
+                if (pixels[i + 3] > 0) {
+                    pixels[i] = 255;
+                    pixels[i + 1] = 255;
+                    pixels[i + 2] = 255;
+                    pixels[i + 3] = 255;
+                }
+            }
+
+            const offCanvas = document.createElement('canvas');
+            offCanvas.width = maskCanvas.width;
+            offCanvas.height = maskCanvas.height;
+            offCanvas.getContext('2d').putImageData(paintedData, 0, 0);
+
+            tempCtx.drawImage(offCanvas, 0, 0);
+
+            const maskBlob = await new Promise(resolve => tempMaskCanvas.toBlob(resolve, 'image/png'));
+
+            // Send via Multipart Form Data
+            const formData = new FormData();
+            formData.append('image', imageBlob, 'image.jpg');
+            formData.append('mask', maskBlob, 'mask.png');
+            formData.append('method', selectedMethod);
+
+            try {
+                const response = await fetch('/process', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    alert(err.error || 'Failed to process image');
+                    loadingOverlay.style.display = 'none';
+                    return;
+                }
+
+                const resultBlob = await response.blob();
+                const resultUrl = URL.createObjectURL(resultBlob);
+
+                resultImage.src = resultUrl;
+                resultImage.style.display = 'block';
+                document.getElementById('placeholderRight').style.display = 'none';
+
+                downloadBtn.href = resultUrl;
+                downloadBtn.style.display = 'flex';
+
+            } catch (error) {
+                alert('Connection error or processing timeout.');
+            } finally {
+                loadingOverlay.style.display = 'none';
+            }
+        }
+    </script>
 </body>
 </html>
