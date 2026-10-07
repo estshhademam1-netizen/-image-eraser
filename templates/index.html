@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 
 <head>
 
@@ -7,557 +7,296 @@
 
 <meta
     name="viewport"
-    content="width=device-width, initial-scale=1.0"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
 >
 
 <title>AI Object Eraser</title>
 
-<script src="https://unpkg.com/lucide@latest"></script>
-
 <style>
-
-:root {
-    --pink: #ec4899;
-    --pink2: #f472b6;
-    --purple: #a855f7;
-    --bg: #fdf2f8;
-    --card: #ffffff;
-    --text: #475569;
-}
 
 * {
     box-sizing: border-box;
 }
 
+html,
 body {
-
     margin: 0;
-
-    font-family:
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        sans-serif;
-
-    background:
-        radial-gradient(
-            #fbcfe8 1px,
-            transparent 1px
-        );
-
-    background-size: 24px 24px;
-
-    background-color: var(--bg);
-
-    color: var(--text);
-
+    padding: 0;
+    width: 100%;
+    min-height: 100%;
+    font-family: Arial, sans-serif;
+    background: #111;
+    color: white;
 }
 
-header {
-
-    padding: 18px 24px;
-
-    background:
-        rgba(255,255,255,.9);
-
-    backdrop-filter:
-        blur(12px);
-
-    border-bottom:
-        2px solid #fce7f3;
-
-    display: flex;
-
-    justify-content:
-        space-between;
-
-    align-items: center;
-
+body {
+    overflow-x: hidden;
 }
 
-.brand {
+/* =====================================================
+   HEADER
+===================================================== */
 
+.header {
+    height: 70px;
+    background: #171717;
     display: flex;
-
     align-items: center;
-
-    gap: 12px;
-
+    justify-content: space-between;
+    padding: 10px 16px;
+    border-bottom: 1px solid #292929;
 }
 
 .logo {
+    font-size: 19px;
+    font-weight: bold;
+}
 
-    width: 44px;
-    height: 44px;
-
+.header button {
+    border: none;
     border-radius: 14px;
+    padding: 11px 16px;
+    font-size: 14px;
+    cursor: pointer;
+}
 
-    background:
-        linear-gradient(
-            135deg,
-            var(--pink),
-            var(--purple)
-        );
+/* =====================================================
+   MAIN
+===================================================== */
 
-    color: white;
-
+.app {
+    min-height: calc(100vh - 70px);
     display: flex;
-
-    align-items: center;
-
-    justify-content: center;
-
 }
 
-.title {
-
-    font-weight: 800;
-
-    font-size: 18px;
-
-    background:
-        linear-gradient(
-            135deg,
-            #db2777,
-            #9333ea
-        );
-
-    -webkit-background-clip: text;
-
-    -webkit-text-fill-color:
-        transparent;
-
-}
-
-.workspace {
-
-    max-width: 1500px;
-
-    margin: auto;
-
-    padding: 20px;
-
-    display: grid;
-
-    grid-template-columns:
-        310px 1fr;
-
-    gap: 20px;
-
-}
+/* =====================================================
+   SIDEBAR
+===================================================== */
 
 .sidebar {
-
-    background: white;
-
-    border:
-        2px solid #fce7f3;
-
-    border-radius: 24px;
-
-    padding: 20px;
-
-    box-shadow:
-        0 10px 30px
-        rgba(236,72,153,.08);
-
-    height: fit-content;
-
+    width: 300px;
+    background: #181818;
+    padding: 18px;
+    border-left: 1px solid #292929;
+    flex-shrink: 0;
 }
 
 .section {
-
     margin-bottom: 20px;
-
 }
 
 .section-title {
-
-    font-size: 12px;
-
-    font-weight: 800;
-
-    text-transform:
-        uppercase;
-
-    color: #94a3b8;
-
-    margin-bottom: 9px;
-
+    font-size: 14px;
+    color: #aaa;
+    margin-bottom: 10px;
 }
 
-.upload {
+/* =====================================================
+   BUTTONS
+===================================================== */
 
-    border:
-        2px dashed
-        var(--pink);
-
-    border-radius: 17px;
-
-    padding: 20px;
-
-    text-align: center;
-
-    color: var(--pink);
-
+.btn {
+    width: 100%;
+    border: 1px solid #333;
+    background: #242424;
+    color: white;
+    padding: 13px;
+    border-radius: 12px;
+    margin-bottom: 8px;
     cursor: pointer;
+    font-size: 14px;
+}
 
+.btn:hover {
+    background: #303030;
+}
+
+.btn.active {
+    border-color: #19e68c;
+    background: #123a2b;
+}
+
+.btn.primary {
+    background: #19d879;
+    color: #06160e;
+    border: none;
+    font-weight: bold;
+}
+
+.btn.danger {
+    background: #3a1717;
+    color: #ff8585;
+}
+
+/* =====================================================
+   WORKSPACE
+===================================================== */
+
+.workspace {
+    flex: 1;
+    min-width: 0;
+    padding: 20px;
+}
+
+/* =====================================================
+   UPLOAD
+===================================================== */
+
+.upload {
+    border: 2px dashed #3c3c3c;
+    border-radius: 18px;
+    padding: 25px;
+    text-align: center;
+    cursor: pointer;
+    margin-bottom: 18px;
+}
+
+.upload:hover {
+    border-color: #19e68c;
 }
 
 .upload input {
     display: none;
 }
 
-.tools {
+/* =====================================================
+   IMAGE AREA
+===================================================== */
 
+.images {
     display: grid;
-
-    grid-template-columns:
-        1fr 1fr;
-
-    gap: 8px;
-
-}
-
-.tool {
-
-    border:
-        2px solid #fce7f3;
-
-    background: white;
-
-    border-radius: 15px;
-
-    padding: 12px 5px;
-
-    text-align: center;
-
-    cursor: pointer;
-
-    font-weight: 700;
-
-    font-size: 13px;
-
-}
-
-.tool.active {
-
-    background: #fdf2f8;
-
-    border-color:
-        var(--pink);
-
-    color:
-        #db2777;
-
-}
-
-.methods {
-
-    display: grid;
-
-    grid-template-columns:
-        1fr 1fr;
-
-    gap: 8px;
-
-}
-
-.method {
-
-    border:
-        2px solid #fce7f3;
-
-    background: white;
-
-    border-radius: 15px;
-
-    padding: 12px 5px;
-
-    text-align: center;
-
-    cursor: pointer;
-
-    font-weight: 700;
-
-    font-size: 13px;
-
-}
-
-.method.active {
-
-    background: #fdf2f8;
-
-    border-color:
-        var(--pink);
-
-    color:
-        #db2777;
-
-}
-
-.slider {
-
-    background:
-        #f8fafc;
-
-    border-radius:
-        15px;
-
-    padding: 13px;
-
-}
-
-.slider-head {
-
-    display: flex;
-
-    justify-content:
-        space-between;
-
-    margin-bottom: 8px;
-
-    font-size: 13px;
-
-    font-weight: 700;
-
-}
-
-input[type="range"] {
-    width: 100%;
-    accent-color: var(--pink);
-}
-
-.actions {
-
-    display: grid;
-
-    grid-template-columns:
-        1fr 1fr;
-
-    gap: 8px;
-
-}
-
-button {
-
-    border: 0;
-
-    border-radius: 15px;
-
-    padding: 13px;
-
-    font-weight: 700;
-
-    cursor: pointer;
-
-}
-
-.secondary {
-
-    background: #f1f5f9;
-
-    color: #475569;
-
-}
-
-.primary {
-
-    width: 100%;
-
-    margin-top: 10px;
-
-    background:
-        linear-gradient(
-            135deg,
-            var(--pink),
-            #db2777
-        );
-
-    color: white;
-
-    padding: 16px;
-
-    font-size: 15px;
-
-}
-
-.primary:disabled {
-
-    opacity: .45;
-
-}
-
-.display {
-
-    display: grid;
-
-    grid-template-columns:
-        1fr 1fr;
-
-    gap: 18px;
-
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
 }
 
 .panel {
-
-    background: white;
-
-    border:
-        2px solid #fce7f3;
-
-    border-radius: 24px;
-
+    background: #181818;
+    border-radius: 16px;
     overflow: hidden;
-
-    min-height: 600px;
-
+    border: 1px solid #292929;
 }
 
 .panel-title {
-
-    padding: 14px 18px;
-
-    background:
-        #fdf2f8;
-
-    color:
-        #db2777;
-
-    font-weight: 800;
-
-}
-
-.viewport {
-
-    height: 600px;
-
-    display: flex;
-
-    justify-content:
-        center;
-
-    align-items:
-        center;
-
-    background: #fafafa;
-
-    overflow: hidden;
-
-    position: relative;
-
+    padding: 11px 14px;
+    font-size: 13px;
+    color: #aaa;
+    border-bottom: 1px solid #292929;
 }
 
 .canvas-wrap {
-
     position: relative;
-
-    max-width: 100%;
-
-    max-height: 100%;
-
+    width: 100%;
+    background: #050505;
+    overflow: hidden;
 }
 
-canvas {
-
+.canvas-wrap img {
+    width: 100%;
+    height: auto;
     display: block;
-
-    max-width: 100%;
-
-    max-height: 570px;
-
 }
 
-#maskCanvas {
-
+#editCanvas {
     position: absolute;
-
-    left: 0;
-
     top: 0;
-
-    cursor: crosshair;
-
+    left: 0;
+    width: 100%;
+    height: 100%;
     touch-action: none;
-
 }
 
-#resultImage {
+/* =====================================================
+   EMPTY
+===================================================== */
 
-    max-width: 100%;
+.empty {
+    min-height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #777;
+    text-align: center;
+}
 
-    max-height: 570px;
+/* =====================================================
+   STATUS
+===================================================== */
 
+.status {
+    margin-top: 15px;
+    padding: 12px;
+    border-radius: 12px;
+    background: #202020;
+    color: #aaa;
+    font-size: 13px;
     display: none;
-
 }
+
+.status.show {
+    display: block;
+}
+
+/* =====================================================
+   LOADING
+===================================================== */
 
 .loader {
-
     display: none;
-
-    position: absolute;
-
+    position: fixed;
     inset: 0;
+    background: rgba(0,0,0,.75);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
 
-    background:
-        rgba(255,255,255,.85);
-
-    align-items:
-        center;
-
-    justify-content:
-        center;
-
-    flex-direction:
-        column;
-
-    gap: 12px;
-
+.loader.show {
+    display: flex;
 }
 
 .spinner {
-
-    width: 45px;
-
-    height: 45px;
-
-    border:
-        4px solid #fbcfe8;
-
-    border-top-color:
-        var(--pink);
-
+    width: 48px;
+    height: 48px;
+    border: 4px solid #444;
+    border-top-color: #19e68c;
     border-radius: 50%;
-
-    animation:
-        spin .8s linear infinite;
-
+    animation: spin 1s linear infinite;
+    margin-bottom: 15px;
 }
 
 @keyframes spin {
-
     to {
-        transform:
-            rotate(360deg);
+        transform: rotate(360deg);
     }
-
 }
 
-@media(max-width:900px) {
+/* =====================================================
+   MOBILE
+===================================================== */
 
-    .workspace {
+@media (max-width: 800px) {
 
-        grid-template-columns:
-            1fr;
-
+    .app {
+        display: block;
     }
 
-    .display {
+    .sidebar {
+        width: 100%;
+        border-left: none;
+        border-bottom: 1px solid #292929;
+    }
 
-        grid-template-columns:
-            1fr;
+    .workspace {
+        padding: 10px;
+    }
 
+    .images {
+        grid-template-columns: 1fr;
+    }
+
+    .logo {
+        font-size: 16px;
     }
 
 }
@@ -570,32 +309,31 @@ canvas {
 <body>
 
 
-<header>
+<!-- =====================================================
+     HEADER
+===================================================== -->
 
-    <div class="brand">
+<header class="header">
 
-        <div class="logo">
-            ✨
-        </div>
-
-        <div class="title">
-            AI Object Eraser
-        </div>
-
+    <div class="logo">
+        🪄 AI Object Eraser
     </div>
 
-    <div>
-        ✨ Aesthetic AI Studio
-    </div>
+    <button
+        onclick="downloadResult()"
+        style="background:#19d879;color:#06160e;font-weight:bold;"
+    >
+        ⬇️ تحميل
+    </button>
 
 </header>
 
 
-<div class="workspace">
+<div class="app">
 
 
 <!-- =====================================================
-SIDEBAR
+     SIDEBAR
 ===================================================== -->
 
 <aside class="sidebar">
@@ -603,281 +341,239 @@ SIDEBAR
 
 <div class="section">
 
-<div class="section-title">
-Upload
+    <div class="section-title">
+        الصورة
+    </div>
+
+    <label class="upload">
+
+        📷
+        <br><br>
+
+        اختر صورة
+
+        <input
+            id="fileInput"
+            type="file"
+            accept="image/*"
+        >
+
+    </label>
+
 </div>
 
-<label class="upload">
 
-📷 Choose Image
-
-<input
-    type="file"
-    id="imageLoader"
-    accept="image/*"
->
-
-</label>
-
-</div>
-
-
-<!-- SELECTION TOOL -->
+<!-- =====================================================
+     SELECTION
+===================================================== -->
 
 <div class="section">
 
-<div class="section-title">
-Selection Tool
+    <div class="section-title">
+        طريقة التحديد
+    </div>
+
+
+    <button
+        id="lassoBtn"
+        class="btn active"
+        onclick="setTool('lasso')"
+    >
+        ⭕ تحديد حول الشيء
+    </button>
+
+
+    <button
+        id="brushBtn"
+        class="btn"
+        onclick="setTool('brush')"
+    >
+        🖌️ فرشاة
+    </button>
+
+
 </div>
 
 
-<div class="tools">
-
-<div
-    class="tool active"
-    id="brushTool"
-    onclick="setSelectionMode('brush')"
->
-🖌️ Brush
-</div>
-
-
-<div
-    class="tool"
-    id="outlineTool"
-    onclick="setSelectionMode('outline')"
->
-🪄 Smart Outline
-</div>
-
-</div>
-
-</div>
-
-
-<!-- METHOD -->
+<!-- =====================================================
+     AI / CLASSIC
+===================================================== -->
 
 <div class="section">
 
-<div class="section-title">
-Removal Method
+    <div class="section-title">
+        طريقة الإزالة
+    </div>
+
+
+    <button
+        id="aiBtn"
+        class="btn active"
+        onclick="setMethod('ai')"
+    >
+        🤖 AI Removal
+        <br>
+        <small>إزالة طبيعية</small>
+    </button>
+
+
+    <button
+        id="classicBtn"
+        class="btn"
+        onclick="setMethod('classic')"
+    >
+        ⚡ Classic Removal
+        <br>
+        <small>سريع</small>
+    </button>
+
 </div>
 
 
-<div class="methods">
-
-<div
-    class="method active"
-    id="aiMethod"
-    onclick="setMethod('ai')"
->
-🤖 AI
-</div>
-
-
-<div
-    class="method"
-    id="classicMethod"
-    onclick="setMethod('classic')"
->
-⚡ Classic
-</div>
-
-</div>
-
-</div>
-
-
-<!-- BRUSH -->
+<!-- =====================================================
+     ACTIONS
+===================================================== -->
 
 <div class="section">
 
-<div class="section-title">
-Brush Size
-</div>
+    <button
+        class="btn primary"
+        onclick="removeObject()"
+    >
+        ✨ إزالة المحدد
+    </button>
 
-<div class="slider">
 
-<div class="slider-head">
+    <button
+        class="btn"
+        onclick="undoSelection()"
+    >
+        ↩️ تراجع عن التحديد
+    </button>
 
-<span>
-Size
-</span>
 
-<span id="brushValue">
-40 px
-</span>
-
-</div>
-
-<input
-    type="range"
-    id="brushSize"
-    min="5"
-    max="120"
-    value="40"
->
-
-</div>
+    <button
+        class="btn danger"
+        onclick="clearSelection()"
+    >
+        🗑️ مسح التحديد
+    </button>
 
 </div>
 
 
-<!-- ACTIONS -->
-
-<div class="section">
-
-<div class="section-title">
-Actions
-</div>
-
-<div class="actions">
-
-<button
-    class="secondary"
-    onclick="undoMask()"
->
-↩️ Undo
-</button>
-
-<button
-    class="secondary"
-    onclick="clearMask()"
->
-🗑️ Clear
-</button>
-
-</div>
-
-</div>
-
-
-<button
-    class="primary"
-    id="processBtn"
-    onclick="processImage()"
-    disabled
->
-✨ Remove Object
-</button>
-
-
-<a
-    id="downloadBtn"
-    class="primary"
-    download="cleaned_image.jpg"
-    style="
-        display:none;
-        text-decoration:none;
-        text-align:center;
-    "
->
-⬇️ Download Result
-</a>
+<div
+    id="status"
+    class="status"
+></div>
 
 
 </aside>
 
 
 <!-- =====================================================
-DISPLAY
+     WORKSPACE
 ===================================================== -->
 
-<main class="display">
+<main class="workspace">
 
+
+<div id="emptyState" class="empty">
+
+    <div>
+
+        <div style="font-size:50px;">
+            🪄
+        </div>
+
+        <h2>
+            AI Object Eraser
+        </h2>
+
+        <p>
+            اختاري صورة ثم ارسمِي حول الشيء الذي تريدين حذفه.
+        </p>
+
+        <p style="color:#777;">
+            المنطقة داخل التحديد هي التي سيتم حذفها.
+        </p>
+
+    </div>
+
+</div>
+
+
+<div
+    id="imageArea"
+    style="display:none;"
+>
+
+
+<div class="images">
+
+
+<!-- ORIGINAL -->
 
 <div class="panel">
 
-<div class="panel-title">
-📷 Original / Selection
-</div>
+    <div class="panel-title">
+        🖼️ Original
+    </div>
 
+    <div class="canvas-wrap">
 
-<div
-    class="viewport"
-    id="originalViewport"
->
+        <img
+            id="originalImage"
+        >
 
-
-<div
-    id="placeholder"
-    style="
-        text-align:center;
-        color:#cbd5e1;
-    "
->
-
-📷
-
-<br>
-
-Upload an image
+    </div>
 
 </div>
 
 
-<div
-    class="canvas-wrap"
-    id="canvasWrap"
-    style="display:none"
->
-
-<canvas id="imageCanvas"></canvas>
-
-<canvas id="maskCanvas"></canvas>
-
-</div>
-
-
-</div>
-
-</div>
-
+<!-- WORKING -->
 
 <div class="panel">
 
-<div class="panel-title">
-✨ Result
+    <div class="panel-title">
+        ✨ Result / Working Image
+    </div>
+
+    <div
+        class="canvas-wrap"
+        id="editWrap"
+    >
+
+        <img
+            id="workingImage"
+        >
+
+        <canvas
+            id="editCanvas"
+        ></canvas>
+
+    </div>
+
 </div>
 
 
-<div class="viewport">
+</div>
 
 
 <div
-    id="resultPlaceholder"
     style="
-        color:#cbd5e1;
+        margin-top:15px;
+        color:#888;
+        font-size:13px;
         text-align:center;
     "
 >
-Result will appear here
+    ارسمِي خطًا مغلقًا حول الشيء ثم اضغطي
+    <b style="color:#19e68c;">
+        إزالة المحدد
+    </b>
 </div>
 
-
-<img
-    id="resultImage"
->
-
-
-<div
-    class="loader"
-    id="loader"
->
-
-<div class="spinner"></div>
-
-<div
-    id="loaderText"
-    style="font-weight:700"
->
-Processing...
-</div>
-
-</div>
-
-
-</div>
 
 </div>
 
@@ -887,203 +583,231 @@ Processing...
 </div>
 
 
+<!-- =====================================================
+     LOADER
+===================================================== -->
+
+<div
+    id="loader"
+    class="loader"
+>
+
+    <div class="spinner"></div>
+
+    <div>
+        جاري إزالة العنصر...
+    </div>
+
+    <div
+        id="loaderText"
+        style="
+            margin-top:8px;
+            color:#aaa;
+            font-size:13px;
+        "
+    >
+        قد يستغرق AI بعض الوقت.
+    </div>
+
+</div>
+
+
 <script>
 
-lucide.createIcons();
 
+// =======================================================
+// VARIABLES
+// =======================================================
 
-const imageLoader =
-    document.getElementById(
-        "imageLoader"
-    );
+const fileInput =
+    document.getElementById("fileInput");
 
+const originalImage =
+    document.getElementById("originalImage");
 
-const imageCanvas =
-    document.getElementById(
-        "imageCanvas"
-    );
+const workingImage =
+    document.getElementById("workingImage");
 
+const editCanvas =
+    document.getElementById("editCanvas");
 
-const maskCanvas =
-    document.getElementById(
-        "maskCanvas"
-    );
+const editWrap =
+    document.getElementById("editWrap");
 
+const ctx =
+    editCanvas.getContext("2d");
 
-const imageCtx =
-    imageCanvas.getContext(
-        "2d"
-    );
+const emptyState =
+    document.getElementById("emptyState");
 
+const imageArea =
+    document.getElementById("imageArea");
 
-const maskCtx =
-    maskCanvas.getContext(
-        "2d"
-    );
-
-
-const processBtn =
-    document.getElementById(
-        "processBtn"
-    );
-
-
-const brushSize =
-    document.getElementById(
-        "brushSize"
-    );
-
-
-const brushValue =
-    document.getElementById(
-        "brushValue"
-    );
-
+const statusBox =
+    document.getElementById("status");
 
 const loader =
-    document.getElementById(
-        "loader"
-    );
+    document.getElementById("loader");
 
 
-const loaderText =
-    document.getElementById(
-        "loaderText"
-    );
+// =======================================================
+// STATE
+// =======================================================
 
+let originalFile = null;
 
-const resultImage =
-    document.getElementById(
-        "resultImage"
-    );
+let workingBlob = null;
 
+let currentTool = "lasso";
 
-const downloadBtn =
-    document.getElementById(
-        "downloadBtn"
-    );
-
-
-let currentImage = null;
-
-let selectedMethod = "ai";
-
-let selectionMode = "brush";
+let currentMethod = "ai";
 
 let drawing = false;
 
-let history = [];
+let points = [];
 
-let outlinePoints = [];
+let selectionHistory = [];
 
 
-/* =====================================================
-IMAGE
-===================================================== */
+// =======================================================
+// IMAGE UPLOAD
+// =======================================================
 
-imageLoader.addEventListener(
+fileInput.addEventListener(
     "change",
-    function(event) {
+    function () {
 
         const file =
-            event.target.files[0];
+            this.files[0];
 
-        if (!file)
+        if (!file) {
             return;
+        }
 
-        const reader =
-            new FileReader();
+        originalFile = file;
 
-        reader.onload =
-            function(e) {
+        workingBlob = file;
 
-                currentImage =
-                    new Image();
+        const url =
+            URL.createObjectURL(file);
 
-                currentImage.onload =
-                    function() {
+        originalImage.src = url;
 
-                        imageCanvas.width =
-                            currentImage.naturalWidth;
+        workingImage.src = url;
 
-                        imageCanvas.height =
-                            currentImage.naturalHeight;
+        originalImage.onload =
+            function () {
 
-                        maskCanvas.width =
-                            currentImage.naturalWidth;
+                emptyState.style.display =
+                    "none";
 
-                        maskCanvas.height =
-                            currentImage.naturalHeight;
+                imageArea.style.display =
+                    "block";
 
-                        imageCtx.clearRect(
-                            0,
-                            0,
-                            imageCanvas.width,
-                            imageCanvas.height
-                        );
+                resizeCanvas();
 
-                        imageCtx.drawImage(
-                            currentImage,
-                            0,
-                            0
-                        );
+                clearSelection();
 
-                        clearMask();
-
-                        document
-                            .getElementById(
-                                "placeholder"
-                            )
-                            .style.display =
-                            "none";
-
-                        document
-                            .getElementById(
-                                "canvasWrap"
-                            )
-                            .style.display =
-                            "inline-block";
-
-                        processBtn.disabled =
-                            false;
-
-                    };
-
-                currentImage.src =
-                    e.target.result;
-
+                showStatus(
+                    "الصورة جاهزة. ارسمِي حول الشيء الذي تريدين حذفه."
+                );
             };
-
-        reader.readAsDataURL(
-            file
-        );
 
     }
 );
 
 
-/* =====================================================
-METHOD
-===================================================== */
+// =======================================================
+// RESIZE CANVAS
+// =======================================================
+
+function resizeCanvas() {
+
+    if (!workingImage.naturalWidth) {
+        return;
+    }
+
+    const rect =
+        editWrap.getBoundingClientRect();
+
+    editCanvas.width =
+        workingImage.naturalWidth;
+
+    editCanvas.height =
+        workingImage.naturalHeight;
+
+    editCanvas.style.width =
+        rect.width + "px";
+
+    editCanvas.style.height =
+        (
+            workingImage.naturalHeight /
+            workingImage.naturalWidth *
+            rect.width
+        ) + "px";
+
+    redrawSelection();
+
+}
+
+
+window.addEventListener(
+    "resize",
+    resizeCanvas
+);
+
+
+// =======================================================
+// TOOL
+// =======================================================
+
+function setTool(tool) {
+
+    currentTool =
+        tool;
+
+    document
+        .getElementById("lassoBtn")
+        .classList.toggle(
+            "active",
+            tool === "lasso"
+        );
+
+    document
+        .getElementById("brushBtn")
+        .classList.toggle(
+            "active",
+            tool === "brush"
+        );
+
+    clearSelection();
+
+    showStatus(
+        tool === "lasso"
+            ? "ارسمِي دائرة مغلقة حول الشيء. كل ما بداخلها سيتم حذفه."
+            : "استخدمي الفرشاة على الشيء الذي تريدين حذفه."
+    );
+}
+
+
+// =======================================================
+// METHOD
+// =======================================================
 
 function setMethod(method) {
 
-    selectedMethod =
+    currentMethod =
         method;
 
     document
-        .getElementById(
-            "aiMethod"
-        )
+        .getElementById("aiBtn")
         .classList.toggle(
             "active",
             method === "ai"
         );
 
     document
-        .getElementById(
-            "classicMethod"
-        )
+        .getElementById("classicBtn")
         .classList.toggle(
             "active",
             method === "classic"
@@ -1092,103 +816,31 @@ function setMethod(method) {
 }
 
 
-/* =====================================================
-SELECTION MODE
-===================================================== */
+// =======================================================
+// POINTER POSITION
+// =======================================================
 
-function setSelectionMode(mode) {
-
-    selectionMode =
-        mode;
-
-    document
-        .getElementById(
-            "brushTool"
-        )
-        .classList.toggle(
-            "active",
-            mode === "brush"
-        );
-
-    document
-        .getElementById(
-            "outlineTool"
-        )
-        .classList.toggle(
-            "active",
-            mode === "outline"
-        );
-
-    clearMask();
-
-}
-
-
-/* =====================================================
-BRUSH
-===================================================== */
-
-brushSize.addEventListener(
-    "input",
-    function() {
-
-        brushValue.innerText =
-            this.value +
-            " px";
-
-    }
-);
-
-
-/* =====================================================
-COORDINATES
-===================================================== */
-
-function getPosition(e) {
+function getCanvasPoint(event) {
 
     const rect =
-        maskCanvas.getBoundingClientRect();
-
-    let clientX;
-    let clientY;
-
-    if (
-        e.touches &&
-        e.touches.length
-    ) {
-
-        clientX =
-            e.touches[0].clientX;
-
-        clientY =
-            e.touches[0].clientY;
-
-    } else {
-
-        clientX =
-            e.clientX;
-
-        clientY =
-            e.clientY;
-
-    }
+        editCanvas.getBoundingClientRect();
 
     const scaleX =
-        maskCanvas.width /
+        editCanvas.width /
         rect.width;
 
     const scaleY =
-        maskCanvas.height /
+        editCanvas.height /
         rect.height;
 
     return {
 
         x:
-            (clientX - rect.left)
+            (event.clientX - rect.left)
             * scaleX,
 
         y:
-            (clientY - rect.top)
+            (event.clientY - rect.top)
             * scaleY
 
     };
@@ -1196,415 +848,365 @@ function getPosition(e) {
 }
 
 
-/* =====================================================
-POINTER START
-===================================================== */
+// =======================================================
+// POINTER DOWN
+// =======================================================
 
-maskCanvas.addEventListener(
+editCanvas.addEventListener(
     "pointerdown",
-    function(e) {
+    function (event) {
 
-        e.preventDefault();
+        if (!workingImage.src) {
+            return;
+        }
 
-        maskCanvas.setPointerCapture(
-            e.pointerId
+        event.preventDefault();
+
+        editCanvas.setPointerCapture(
+            event.pointerId
         );
 
         drawing = true;
 
-        if (
-            selectionMode ===
-            "outline"
-        ) {
+        points = [];
 
-            outlinePoints = [];
+        const p =
+            getCanvasPoint(event);
 
-            const p =
-                getPosition(e);
+        points.push(p);
 
-            outlinePoints.push(p);
-
-            maskCtx.beginPath();
-
-            maskCtx.moveTo(
-                p.x,
-                p.y
-            );
-
-        } else {
-
-            saveHistory();
-
-            drawBrush(e);
-
-        }
+        redrawSelection();
 
     }
 );
 
 
-/* =====================================================
-POINTER MOVE
-===================================================== */
+// =======================================================
+// POINTER MOVE
+// =======================================================
 
-maskCanvas.addEventListener(
+editCanvas.addEventListener(
     "pointermove",
-    function(e) {
+    function (event) {
 
-        if (!drawing)
+        if (!drawing) {
             return;
-
-        e.preventDefault();
-
-        if (
-            selectionMode ===
-            "outline"
-        ) {
-
-            const p =
-                getPosition(e);
-
-            outlinePoints.push(p);
-
-            maskCtx.lineWidth =
-                5;
-
-            maskCtx.lineCap =
-                "round";
-
-            maskCtx.strokeStyle =
-                "rgba(236,72,153,.85)";
-
-            maskCtx.lineTo(
-                p.x,
-                p.y
-            );
-
-            maskCtx.stroke();
-
-            maskCtx.beginPath();
-
-            maskCtx.moveTo(
-                p.x,
-                p.y
-            );
-
-        } else {
-
-            drawBrush(e);
-
         }
+
+        event.preventDefault();
+
+        const p =
+            getCanvasPoint(event);
+
+        points.push(p);
+
+        redrawSelection();
 
     }
 );
 
 
-/* =====================================================
-POINTER END
-===================================================== */
+// =======================================================
+// POINTER UP
+// =======================================================
 
-maskCanvas.addEventListener(
+editCanvas.addEventListener(
     "pointerup",
-    function(e) {
+    function (event) {
 
-        if (!drawing)
+        if (!drawing) {
             return;
-
-        drawing = false;
-
-        if (
-            selectionMode ===
-            "outline"
-        ) {
-
-            finishOutline();
-
         }
 
-    }
-);
-
-
-maskCanvas.addEventListener(
-    "pointercancel",
-    function() {
-
         drawing = false;
 
-    }
-);
+        event.preventDefault();
 
+        if (currentTool === "lasso") {
 
-/* =====================================================
-BRUSH DRAW
-===================================================== */
+            if (points.length >= 3) {
 
-function drawBrush(e) {
-
-    const p =
-        getPosition(e);
-
-    const size =
-        Number(
-            brushSize.value
-        );
-
-    maskCtx.fillStyle =
-        "rgba(236,72,153,.65)";
-
-    maskCtx.beginPath();
-
-    maskCtx.arc(
-        p.x,
-        p.y,
-        size / 2,
-        0,
-        Math.PI * 2
-    );
-
-    maskCtx.fill();
-
-}
-
-
-/* =====================================================
-SMART OUTLINE
-===================================================== */
-
-function finishOutline() {
-
-    if (
-        outlinePoints.length <
-        3
-    ) {
-
-        return;
-
-    }
-
-    // Close polygon
-    const first =
-        outlinePoints[0];
-
-    maskCtx.lineTo(
-        first.x,
-        first.y
-    );
-
-    maskCtx.closePath();
-
-    // Fill the inside
-    maskCtx.fillStyle =
-        "rgba(236,72,153,.35)";
-
-    maskCtx.fill();
-
-    // Strong visible border
-    maskCtx.beginPath();
-
-    maskCtx.moveTo(
-        first.x,
-        first.y
-    );
-
-    for (
-        let i = 1;
-        i < outlinePoints.length;
-        i++
-    ) {
-
-        maskCtx.lineTo(
-            outlinePoints[i].x,
-            outlinePoints[i].y
-        );
-
-    }
-
-    maskCtx.closePath();
-
-    maskCtx.lineWidth =
-        5;
-
-    maskCtx.strokeStyle =
-        "rgba(236,72,153,.9)";
-
-    maskCtx.stroke();
-
-    saveHistory();
-
-}
-
-
-/* =====================================================
-HISTORY
-===================================================== */
-
-function saveHistory() {
-
-    history.push(
-        maskCtx.getImageData(
-            0,
-            0,
-            maskCanvas.width,
-            maskCanvas.height
-        )
-    );
-
-    if (
-        history.length >
-        15
-    ) {
-
-        history.shift();
-
-    }
-
-}
-
-
-/* =====================================================
-UNDO
-===================================================== */
-
-function undoMask() {
-
-    if (
-        history.length ===
-        0
-    ) {
-
-        clearMask();
-
-        return;
-
-    }
-
-    const previous =
-        history.pop();
-
-    maskCtx.putImageData(
-        previous,
-        0,
-        0
-    );
-
-}
-
-
-/* =====================================================
-CLEAR
-===================================================== */
-
-function clearMask() {
-
-    maskCtx.clearRect(
-        0,
-        0,
-        maskCanvas.width,
-        maskCanvas.height
-    );
-
-    history = [];
-
-    outlinePoints = [];
-
-    resultImage.style.display =
-        "none";
-
-    downloadBtn.style.display =
-        "none";
-
-    document
-        .getElementById(
-            "resultPlaceholder"
-        )
-        .style.display =
-        "block";
-
-}
-
-
-/* =====================================================
-CREATE MASK
-===================================================== */
-
-function createMaskBlob() {
-
-    return new Promise(
-        function(resolve) {
-
-            const mask =
-                document.createElement(
-                    "canvas"
-                );
-
-            mask.width =
-                maskCanvas.width;
-
-            mask.height =
-                maskCanvas.height;
-
-            const ctx =
-                mask.getContext(
-                    "2d"
-                );
-
-            ctx.fillStyle =
-                "black";
-
-            ctx.fillRect(
-                0,
-                0,
-                mask.width,
-                mask.height
-            );
-
-            const pixels =
-                maskCtx.getImageData(
-                    0,
-                    0,
-                    maskCanvas.width,
-                    maskCanvas.height
-                );
-
-            const data =
-                pixels.data;
-
-            for (
-                let i = 0;
-                i < data.length;
-                i += 4
-            ) {
-
-                if (
-                    data[i + 3] >
-                    10
-                ) {
-
-                    data[i] =
-                        255;
-
-                    data[i + 1] =
-                        255;
-
-                    data[i + 2] =
-                        255;
-
-                    data[i + 3] =
-                        255;
-
-                }
+                // CLOSE THE POLYGON
+                points.push({
+                    x: points[0].x,
+                    y: points[0].y
+                });
 
             }
 
-            ctx.putImageData(
-                pixels,
-                0,
-                0
+        }
+
+        redrawSelection();
+
+    }
+);
+
+
+// =======================================================
+// POINTER CANCEL
+// =======================================================
+
+editCanvas.addEventListener(
+    "pointercancel",
+    function () {
+
+        drawing = false;
+
+    }
+);
+
+
+// =======================================================
+// DRAW SELECTION
+// =======================================================
+
+function redrawSelection() {
+
+    ctx.clearRect(
+        0,
+        0,
+        editCanvas.width,
+        editCanvas.height
+    );
+
+    if (points.length === 0) {
+        return;
+    }
+
+
+    // ---------------------------------------------------
+    // LASSO
+    // ---------------------------------------------------
+
+    if (currentTool === "lasso") {
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            points[0].x,
+            points[0].y
+        );
+
+        for (
+            let i = 1;
+            i < points.length;
+            i++
+        ) {
+
+            ctx.lineTo(
+                points[i].x,
+                points[i].y
             );
 
+        }
+
+        ctx.closePath();
+
+
+        // Transparent green fill
+        ctx.fillStyle =
+            "rgba(25,230,140,0.22)";
+
+        ctx.fill();
+
+
+        // Green outline
+        ctx.strokeStyle =
+            "#19e68c";
+
+        ctx.lineWidth =
+            Math.max(
+                6,
+                editCanvas.width / 180
+            );
+
+        ctx.lineJoin =
+            "round";
+
+        ctx.lineCap =
+            "round";
+
+        ctx.stroke();
+
+    }
+
+
+    // ---------------------------------------------------
+    // BRUSH
+    // ---------------------------------------------------
+
+    else {
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            points[0].x,
+            points[0].y
+        );
+
+        for (
+            let i = 1;
+            i < points.length;
+            i++
+        ) {
+
+            ctx.lineTo(
+                points[i].x,
+                points[i].y
+            );
+
+        }
+
+        ctx.strokeStyle =
+            "rgba(25,230,140,0.70)";
+
+        ctx.lineWidth =
+            Math.max(
+                25,
+                editCanvas.width / 35
+            );
+
+        ctx.lineCap =
+            "round";
+
+        ctx.lineJoin =
+            "round";
+
+        ctx.stroke();
+
+    }
+
+}
+
+
+// =======================================================
+// CREATE MASK
+// =======================================================
+
+function createMaskBlob() {
+
+    const mask =
+        document.createElement("canvas");
+
+    mask.width =
+        editCanvas.width;
+
+    mask.height =
+        editCanvas.height;
+
+    const mctx =
+        mask.getContext("2d");
+
+
+    mctx.fillStyle =
+        "black";
+
+    mctx.fillRect(
+        0,
+        0,
+        mask.width,
+        mask.height
+    );
+
+
+    if (points.length < 2) {
+        return null;
+    }
+
+
+    // ===================================================
+    // LASSO = EVERYTHING INSIDE IS WHITE
+    // ===================================================
+
+    if (currentTool === "lasso") {
+
+        if (points.length < 3) {
+            return null;
+        }
+
+        mctx.beginPath();
+
+        mctx.moveTo(
+            points[0].x,
+            points[0].y
+        );
+
+        for (
+            let i = 1;
+            i < points.length;
+            i++
+        ) {
+
+            mctx.lineTo(
+                points[i].x,
+                points[i].y
+            );
+
+        }
+
+        // VERY IMPORTANT
+        // Fill the interior.
+        mctx.closePath();
+
+        mctx.fillStyle =
+            "white";
+
+        mctx.fill();
+
+    }
+
+
+    // ===================================================
+    // BRUSH = STROKE IS WHITE
+    // ===================================================
+
+    else {
+
+        mctx.beginPath();
+
+        mctx.moveTo(
+            points[0].x,
+            points[0].y
+        );
+
+        for (
+            let i = 1;
+            i < points.length;
+            i++
+        ) {
+
+            mctx.lineTo(
+                points[i].x,
+                points[i].y
+            );
+
+        }
+
+        mctx.strokeStyle =
+            "white";
+
+        mctx.lineWidth =
+            Math.max(
+                35,
+                mask.width / 30
+            );
+
+        mctx.lineCap =
+            "round";
+
+        mctx.lineJoin =
+            "round";
+
+        mctx.stroke();
+
+    }
+
+
+    return new Promise(
+        resolve => {
+
             mask.toBlob(
-                function(blob) {
+                blob => {
 
                     resolve(blob);
 
@@ -1618,112 +1220,144 @@ function createMaskBlob() {
 }
 
 
-/* =====================================================
-PROCESS
-===================================================== */
+// =======================================================
+// REMOVE OBJECT
+// =======================================================
 
-async function processImage() {
+async function removeObject() {
 
-    if (!currentImage)
+    if (!workingBlob) {
+
+        alert(
+            "اختاري صورة أولًا."
+        );
+
         return;
-
-    loader.style.display =
-        "flex";
-
-    processBtn.disabled =
-        true;
-
-    if (
-        selectedMethod ===
-        "ai"
-    ) {
-
-        loaderText.innerText =
-            "🤖 AI is rebuilding the background...";
-
-    } else {
-
-        loaderText.innerText =
-            "⚡ Removing object...";
 
     }
 
+
+    if (points.length < 2) {
+
+        alert(
+            currentTool === "lasso"
+                ? "ارسمي تحديدًا مغلقًا حول الشيء أولًا."
+                : "ارسمي على الشيء أولًا."
+        );
+
+        return;
+
+    }
+
+
+    if (
+        currentTool === "lasso" &&
+        points.length < 4
+    ) {
+
+        alert(
+            "لازم يكون التحديد مغلقًا حول الشيء."
+        );
+
+        return;
+
+    }
+
+
+    const maskBlob =
+        await createMaskBlob();
+
+
+    if (!maskBlob) {
+
+        alert(
+            "تعذر إنشاء التحديد."
+        );
+
+        return;
+
+    }
+
+
+    // ===================================================
+    // FORM DATA
+    // ===================================================
+
+    const formData =
+        new FormData();
+
+
+    formData.append(
+        "image",
+        workingBlob,
+        "working.jpg"
+    );
+
+
+    formData.append(
+        "mask",
+        maskBlob,
+        "mask.png"
+    );
+
+
+    formData.append(
+        "method",
+        currentMethod
+    );
+
+
+    formData.append(
+        "selection_mode",
+        currentTool
+    );
+
+
+    // ===================================================
+    // LOADING
+    // ===================================================
+
+    loader.classList.add(
+        "show"
+    );
+
+
+    document
+        .getElementById("loaderText")
+        .textContent =
+            currentMethod === "ai"
+                ? "الذكاء الاصطناعي يعيد بناء الخلفية..."
+                : "جارٍ حذف العنصر...";
+
+
     try {
-
-        const imageBlob =
-            await new Promise(
-                resolve =>
-                    imageCanvas.toBlob(
-                        resolve,
-                        "image/jpeg",
-                        .97
-                    )
-            );
-
-        const maskBlob =
-            await createMaskBlob();
-
-        const formData =
-            new FormData();
-
-        formData.append(
-            "image",
-            imageBlob,
-            "image.jpg"
-        );
-
-        formData.append(
-            "mask",
-            maskBlob,
-            "mask.png"
-        );
-
-        formData.append(
-            "method",
-            selectedMethod
-        );
-
-        formData.append(
-            "selection_mode",
-            selectionMode
-        );
 
         const response =
             await fetch(
                 "/process",
                 {
-                    method:
-                        "POST",
-                    body:
-                        formData
+                    method: "POST",
+                    body: formData
                 }
             );
+
 
         if (!response.ok) {
 
             let message =
-                "Processing failed.";
+                "حدث خطأ أثناء المعالجة.";
 
             try {
 
                 const data =
                     await response.json();
 
-                message =
-                    data.error ||
-                    message;
-
-                if (
-                    data.details
-                ) {
-
-                    message +=
-                        "\n" +
-                        data.details;
-
+                if (data.error) {
+                    message =
+                        data.error;
                 }
 
-            } catch {}
+            } catch (e) {}
 
             throw new Error(
                 message
@@ -1731,53 +1365,185 @@ async function processImage() {
 
         }
 
-        const blob =
+
+        const resultBlob =
             await response.blob();
 
-        const url =
+
+        // =================================================
+        // IMPORTANT:
+        // RESULT BECOMES THE NEW WORKING IMAGE
+        // =================================================
+
+        workingBlob =
+            resultBlob;
+
+
+        const resultURL =
             URL.createObjectURL(
-                blob
+                resultBlob
             );
 
-        resultImage.src =
-            url;
 
-        resultImage.style.display =
-            "block";
+        workingImage.src =
+            resultURL;
 
-        document
-            .getElementById(
-                "resultPlaceholder"
-            )
-            .style.display =
-            "none";
 
-        downloadBtn.href =
-            url;
+        // Wait for the new image dimensions
+        await new Promise(
+            resolve => {
 
-        downloadBtn.style.display =
-            "block";
+                workingImage.onload =
+                    resolve;
 
-    } catch (error) {
-
-        alert(
-            error.message
+            }
         );
 
-    } finally {
 
-        loader.style.display =
-            "none";
+        // Clear previous selection
+        points = [];
 
-        processBtn.disabled =
-            false;
+        ctx.clearRect(
+            0,
+            0,
+            editCanvas.width,
+            editCanvas.height
+        );
+
+
+        resizeCanvas();
+
+
+        showStatus(
+            "✅ تم حذف العنصر. يمكنك الآن تحديد عنصر آخر من النتيجة."
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            error
+        );
+
+        alert(
+            "❌ " + error.message
+        );
+
+    }
+
+    finally {
+
+        loader.classList.remove(
+            "show"
+        );
 
     }
 
 }
 
+
+// =======================================================
+// CLEAR SELECTION
+// =======================================================
+
+function clearSelection() {
+
+    points = [];
+
+    ctx.clearRect(
+        0,
+        0,
+        editCanvas.width,
+        editCanvas.height
+    );
+
+}
+
+
+// =======================================================
+// UNDO SELECTION
+// =======================================================
+
+function undoSelection() {
+
+    if (points.length === 0) {
+        return;
+    }
+
+    points.pop();
+
+    redrawSelection();
+
+}
+
+
+// =======================================================
+// STATUS
+// =======================================================
+
+function showStatus(message) {
+
+    statusBox.textContent =
+        message;
+
+    statusBox.classList.add(
+        "show"
+    );
+
+}
+
+
+// =======================================================
+// DOWNLOAD
+// =======================================================
+
+function downloadResult() {
+
+    if (!workingBlob) {
+
+        alert(
+            "لا توجد نتيجة بعد."
+        );
+
+        return;
+
+    }
+
+
+    const url =
+        URL.createObjectURL(
+            workingBlob
+        );
+
+
+    const a =
+        document.createElement("a");
+
+
+    a.href =
+        url;
+
+    a.download =
+        "AI-Erased-Image.jpg";
+
+
+    document.body.appendChild(a);
+
+    a.click();
+
+    a.remove();
+
+
+    setTimeout(
+        () => URL.revokeObjectURL(url),
+        1000
+    );
+
+}
+
+
 </script>
 
 </body>
-
 </html>
