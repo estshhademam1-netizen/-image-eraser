@@ -1,385 +1,325 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Magic Object Eraser</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        .checkerboard {
-            background-color: #1e293b;
-            background-image: linear-gradient(45deg, #0f172a 25%, transparent 25%), 
-                              linear-gradient(-45deg, #0f172a 25%, transparent 25%), 
-                              linear-gradient(45deg, transparent 75%, #0f172a 75%), 
-                              linear-gradient(-45deg, transparent 75%, #0f172a 75%);
-            background-size: 20px 20px;
-            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Magic Photo Eraser ✨💖</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #ff758c;
+      --secondary: #ff7eb3;
+      --bg-gradient: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #feada6 100%);
+      --card-bg: rgba(255, 255, 255, 0.9);
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--bg-gradient);
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: #4a4a4a;
+    }
+
+    .container {
+      background: var(--card-bg);
+      backdrop-filter: blur(10px);
+      border-radius: 25px;
+      padding: 30px;
+      box-shadow: 0 15px 35px rgba(255, 117, 140, 0.25);
+      width: 100%;
+      max-width: 900px;
+      text-align: center;
+      border: 2px solid #ffffff;
+    }
+
+    h1 {
+      color: #d83a56;
+      font-size: 2.2rem;
+      margin-bottom: 5px;
+    }
+
+    p.subtitle {
+      color: #884466;
+      font-size: 0.95rem;
+      margin-bottom: 25px;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+      background: #fff0f5;
+      padding: 15px;
+      border-radius: 20px;
+    }
+
+    .btn {
+      background: linear-gradient(45deg, var(--primary), var(--secondary));
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 50px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(255, 117, 140, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(255, 117, 140, 0.45);
+    }
+
+    .btn.active {
+      outline: 3px solid #d83a56;
+      background: #d83a56;
+    }
+
+    .btn-secondary {
+      background: #ffffff;
+      color: #d83a56;
+      border: 2px solid #ffb6c1;
+    }
+
+    .canvas-wrapper {
+      position: relative;
+      margin: 20px auto;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+      background: #fff;
+      display: inline-block;
+      max-width: 100%;
+    }
+
+    canvas {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      cursor: crosshair;
+    }
+
+    #resultContainer {
+      margin-top: 25px;
+      display: none;
+      animation: fadeIn 0.5s ease-in-out;
+    }
+
+    #resultImage {
+      max-width: 100%;
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      border: 4px solid #fff;
+    }
+
+    .status-spinner {
+      display: none;
+      color: #d83a56;
+      font-weight: 600;
+      margin: 15px 0;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+  </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans antialiased">
+<body>
 
-    <!-- Header -->
-    <header class="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="p-2 bg-indigo-600 rounded-xl shadow-lg shadow-indigo-500/30">
-                    <i data-lucide="sparkles" class="w-6 h-6 text-white"></i>
-                </div>
-                <div>
-                    <h1 class="font-bold text-lg leading-none bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">EraseAI</h1>
-                    <span class="text-xs text-slate-500">Object Removal Studio</span>
-                </div>
-            </div>
+  <div class="container">
+    <h1>Magic Photo Eraser ✨🌸</h1>
+    <p class="subtitle">Upload your picture & effortlessly remove anything!</p>
 
-            <!-- Header Actions -->
-            <div class="flex items-center space-x-4">
-                <label for="imageLoader" class="cursor-pointer bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-2 rounded-xl text-sm font-medium transition flex items-center gap-2 border border-slate-700">
-                    <i data-lucide="upload" class="w-4 h-4"></i>
-                    <span>Upload New</span>
-                </label>
-                <input type="file" id="imageLoader" accept="image/*" class="hidden">
-            </div>
-        </div>
-    </header>
+    <input type="file" id="uploadInput" accept="image/*" style="display: none;">
+    <button class="btn" style="margin: 0 auto 20px auto;" onclick="document.getElementById('uploadInput').click()">
+      📸 Upload Image
+    </button>
 
-    <!-- Main Workspace -->
-    <main class="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
+    <div class="toolbar" id="toolbar" style="display: none;">
+      <button class="btn btn-secondary active" id="btnBrush" onclick="setMode('brush')">🖌️ Manual Brush</button>
+      <button class="btn btn-secondary" id="btnMagic" onclick="setMode('magic')">🪄 Magic Auto-Select</button>
+      
+      <label style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #d83a56;">
+        Size: <input type="range" id="brushSize" min="5" max="60" value="25">
+      </label>
+
+      <button class="btn btn-secondary" onclick="clearCanvas()">🔄 Reset Selection</button>
+      <button class="btn" onclick="processImage()">✨ Erase & Reveal</button>
+    </div>
+
+    <div class="canvas-wrapper" id="canvasWrapper" style="display: none;">
+      <canvas id="imageCanvas"></canvas>
+    </div>
+
+    <div class="status-spinner" id="loadingSpinner">
+      🪄 Magic is happening... Please wait! 💖
+    </div>
+
+    <div id="resultContainer">
+      <h3 style="color: #d83a56;">✨ Result Magic Reveal ✨</h3>
+      <img id="resultImage" alt="Magic Result">
+      <br><br>
+      <a id="downloadBtn" class="btn" style="display: inline-flex; text-decoration: none;" download="erased_magic.jpg">
+        💖 Download Clean Photo
+      </a>
+    </div>
+  </div>
+
+  <script>
+    const uploadInput = document.getElementById('uploadInput');
+    const canvas = document.getElementById('imageCanvas');
+    const ctx = canvas.getContext('2d');
+    let currentImage = null;
+    let mode = 'brush'; // 'brush' or 'magic'
+    let isDrawing = false;
+    
+    // Hidden canvas for mask layer
+    const maskCanvas = document.createElement('canvas');
+    const maskCtx = maskCanvas.getContext('2d');
+
+    uploadInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const img = new Image();
+      img.onload = () => {
+        currentImage = img;
+        canvas.width = img.width;
+        canvas.height = img.height;
+        maskCanvas.width = img.width;
+        maskCanvas.height = img.height;
+
+        render();
+        document.getElementById('toolbar').style.display = 'flex';
+        document.getElementById('canvasWrapper').style.display = 'inline-block';
+        document.getElementById('resultContainer').style.display = 'none';
+      };
+      img.src = URL.createObjectURL(file);
+    });
+
+    function render() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(currentImage, 0, 0);
+
+      // Draw mask overlay with pink glow
+      ctx.save();
+      ctx.globalAlpha = 0.55;
+      ctx.drawImage(maskCanvas, 0, 0);
+      ctx.restore();
+    }
+
+    function setMode(newMode) {
+      mode = newMode;
+      document.getElementById('btnBrush').classList.toggle('active', mode === 'brush');
+      document.getElementById('btnMagic').classList.toggle('active', mode === 'magic');
+    }
+
+    // Drawing Events
+    canvas.addEventListener('mousedown', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const x = Math.floor((e.clientX - rect.left) * scaleX);
+      const y = Math.floor((e.clientY - rect.top) * scaleY);
+
+      if (mode === 'brush') {
+        isDrawing = true;
+        drawBrush(x, y);
+      } else if (mode === 'magic') {
+        performMagicSelect(x, y);
+      }
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      if (!isDrawing || mode !== 'brush') return;
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      drawBrush((e.clientX - rect.left) * scaleX, (e.clientY - rect.top) * scaleY);
+    });
+
+    window.addEventListener('mouseup', () => isDrawing = false);
+
+    function drawBrush(x, y) {
+      const size = document.getElementById('brushSize').value;
+      maskCtx.fillStyle = '#ff1493';
+      maskCtx.beginPath();
+      maskCtx.arc(x, y, size / 2, 0, Math.PI * 2);
+      maskCtx.fill();
+      render();
+    }
+
+    function clearCanvas() {
+      maskCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+      render();
+    }
+
+    async function performMagicSelect(x, y) {
+      document.getElementById('loadingSpinner').style.display = 'block';
+      const file = uploadInput.files[0];
+      const formData = new FormData();
+      formData.append('image', file);
+      formData.append('x', x);
+      formData.append('y', y);
+
+      try {
+        const response = await fetch('/magic-select', { method: 'POST', body: formData });
+        if (!response.ok) throw new Error('Magic select failed');
         
-        <!-- Left Toolbar -->
-        <aside class="w-full lg:w-80 border-b lg:border-b-0 lg:border-r border-slate-800 bg-slate-900/30 p-6 flex flex-col gap-6 overflow-y-auto">
-            
-            <!-- Removal Engine Mode -->
-            <div>
-                <label class="text-xs font-semibold uppercase tracking-wider text-slate-400 block mb-3">Processing Engine</label>
-                <div class="grid grid-cols-2 gap-2 p-1 bg-slate-950 rounded-xl border border-slate-800">
-                    <button id="modeAi" onclick="setMode('ai')" class="flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-medium transition bg-indigo-600 text-white shadow-md">
-                        <i data-lucide="cpu" class="w-4 h-4"></i>
-                        <span>AI LaMa</span>
-                    </button>
-                    <button id="modeClassic" onclick="setMode('classic')" class="flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white">
-                        <i data-lucide="zap" class="w-4 h-4"></i>
-                        <span>Classic</span>
-                    </button>
-                </div>
-            </div>
+        const blob = await response.blob();
+        const maskImg = new Image();
+        maskImg.onload = () => {
+          // Fill mask canvas with the auto-selected region
+          maskCtx.drawImage(maskImg, 0, 0);
+          render();
+          document.getElementById('loadingSpinner').style.display = 'none';
+        };
+        maskImg.src = URL.createObjectURL(blob);
+      } catch (err) {
+        alert(err.message);
+        document.getElementById('loadingSpinner').style.display = 'none';
+      }
+    }
 
-            <!-- Brush Size Control -->
-            <div>
-                <div class="flex justify-between items-center mb-2">
-                    <label class="text-xs font-semibold uppercase tracking-wider text-slate-400">Brush Size</label>
-                    <span id="brushSizeVal" class="text-xs text-indigo-400 font-mono">30px</span>
-                </div>
-                <input type="range" id="brushSize" min="5" max="100" value="30" class="w-full accent-indigo-500 bg-slate-800 rounded-lg h-2 cursor-pointer">
-            </div>
+    async function processImage() {
+      document.getElementById('loadingSpinner').style.display = 'block';
+      document.getElementById('resultContainer').style.display = 'none';
 
-            <!-- Canvas Editing Controls -->
-            <div class="space-y-2">
-                <label class="text-xs font-semibold uppercase tracking-wider text-slate-400 block mb-3">Mask Actions</label>
-                <div class="flex gap-2">
-                    <button id="undoBtn" onclick="undoMask()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 py-2.5 rounded-xl text-xs font-medium transition flex items-center justify-center gap-2 border border-slate-700 disabled:opacity-50" disabled>
-                        <i data-lucide="undo" class="w-4 h-4"></i>
-                        <span>Undo</span>
-                    </button>
-                    <button id="clearBtn" onclick="clearMask()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 py-2.5 rounded-xl text-xs font-medium transition flex items-center justify-center gap-2 border border-slate-700">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                        <span>Clear</span>
-                    </button>
-                </div>
-            </div>
+      // Convert maskCanvas to Blob
+      maskCanvas.toBlob(async (maskBlob) => {
+        const formData = new FormData();
+        formData.append('image', uploadInput.files[0]);
+        formData.append('mask', maskBlob, 'mask.png');
+        formData.append('method', 'ai');
 
-            <hr class="border-slate-800">
+        try {
+          const res = await fetch('/process', { method: 'POST', body: formData });
+          if (!res.ok) throw new Error('Processing error');
 
-            <!-- Process Button -->
-            <button id="processBtn" onclick="processImage()" class="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-indigo-600/25 transition flex items-center justify-center gap-2 text-sm disabled:opacity-50">
-                <i data-lucide="sparkles" class="w-4 h-4"></i>
-                <span>Erase Object</span>
-            </button>
-
-            <!-- Download Button (Hidden until processed) -->
-            <a id="downloadBtn" download="erased-image.jpg" class="hidden w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-emerald-600/25 transition items-center justify-center gap-2 text-sm text-center">
-                <i data-lucide="download" class="w-4 h-4"></i>
-                <span>Download Result</span>
-            </a>
-
-        </aside>
-
-        <!-- Canvas Viewport -->
-        <section class="flex-1 relative flex items-center justify-center p-6 checkerboard overflow-hidden min-h-[500px]">
-            
-            <!-- Upload Placeholder -->
-            <div id="dropZone" class="text-center p-8 border-2 border-dashed border-slate-700 rounded-3xl max-w-md bg-slate-900/40 backdrop-blur-sm flex flex-col items-center">
-                <div class="p-4 bg-slate-800/80 rounded-2xl mb-4 text-slate-400">
-                    <i data-lucide="image-plus" class="w-10 h-10"></i>
-                </div>
-                <h3 class="text-base font-semibold text-slate-200 mb-1">Drag and drop your image here</h3>
-                <p class="text-xs text-slate-500 mb-6">Supports PNG, JPG, WEBP up to 12MB</p>
-                <button onclick="document.getElementById('imageLoader').click()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-5 py-2.5 rounded-xl shadow-lg shadow-indigo-600/20 transition">
-                    Browse Files
-                </button>
-            </div>
-
-            <!-- Canvas Wrapper -->
-            <div id="canvasContainer" class="relative hidden max-w-full max-h-full flex items-center justify-center shadow-2xl rounded-xl overflow-hidden border border-slate-800">
-                <canvas id="imageCanvas" class="block max-w-full max-h-[75vh] object-contain"></canvas>
-                <canvas id="maskCanvas" class="absolute top-0 left-0 cursor-crosshair max-w-full max-h-[75vh] object-contain"></canvas>
-                
-                <!-- Result Comparison Canvas (Hidden by default) -->
-                <canvas id="resultCanvas" class="hidden absolute top-0 left-0 pointer-events-none max-w-full max-h-[75vh] object-contain"></canvas>
-            </div>
-
-            <!-- Loading Spinner Overlay -->
-            <div id="loadingOverlay" class="hidden absolute inset-0 bg-slate-950/80 backdrop-blur-md flex flex-col items-center justify-center gap-4 z-40">
-                <div class="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-                <p id="loadingText" class="text-sm font-medium text-slate-300">Processing image with AI...</p>
-            </div>
-
-        </section>
-    </main>
-
-    <!-- Client-Side Engine Scripts -->
-    <script>
-        lucide.createIcons();
-
-        // Canvas States
-        const imageCanvas = document.getElementById('imageCanvas');
-        const maskCanvas = document.getElementById('maskCanvas');
-        const resultCanvas = document.getElementById('resultCanvas');
-        
-        const imgCtx = imageCanvas.getContext('2d');
-        const maskCtx = maskCanvas.getContext('2d');
-        const resCtx = resultCanvas.getContext('2d');
-
-        let currentImage = null;
-        let isDrawing = false;
-        let selectedMode = 'ai';
-        let brushRadius = 30;
-        let strokeHistory = [];
-
-        // Elements
-        const imageLoader = document.getElementById('imageLoader');
-        const brushSizeInput = document.getElementById('brushSize');
-        const brushSizeVal = document.getElementById('brushSizeVal');
-        const dropZone = document.getElementById('dropZone');
-        const canvasContainer = document.getElementById('canvasContainer');
-        const loadingOverlay = document.getElementById('loadingOverlay');
-        const downloadBtn = document.getElementById('downloadBtn');
-        const undoBtn = document.getElementById('undoBtn');
-
-        // Mode Switching
-        function setMode(mode) {
-            selectedMode = mode;
-            const aiBtn = document.getElementById('modeAi');
-            const classicBtn = document.getElementById('modeClassic');
-
-            if (mode === 'ai') {
-                aiBtn.className = "flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-medium transition bg-indigo-600 text-white shadow-md";
-                classicBtn.className = "flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white";
-            } else {
-                classicBtn.className = "flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-medium transition bg-indigo-600 text-white shadow-md";
-                aiBtn.className = "flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-medium transition text-slate-400 hover:text-white";
-            }
+          const resultBlob = await res.blob();
+          const resultUrl = URL.createObjectURL(resultBlob);
+          
+          document.getElementById('resultImage').src = resultUrl;
+          document.getElementById('downloadBtn').href = resultUrl;
+          document.getElementById('resultContainer').style.display = 'block';
+        } catch (e) {
+          alert("Error: " + e.message);
+        } finally {
+          document.getElementById('loadingSpinner').style.display = 'none';
         }
-
-        // Handle Image Upload
-        imageLoader.addEventListener('change', handleImageUpload);
-
-        function handleImageUpload(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                currentImage = new Image();
-                currentImage.onload = function() {
-                    initCanvas(currentImage);
-                }
-                currentImage.src = event.target.result;
-            }
-            reader.readAsDataURL(file);
-        }
-
-        function initCanvas(img) {
-            // Set dimensions
-            imageCanvas.width = img.width;
-            imageCanvas.height = img.height;
-            maskCanvas.width = img.width;
-            maskCanvas.height = img.height;
-            resultCanvas.width = img.width;
-            resultCanvas.height = img.height;
-
-            // Draw image on base canvas
-            imgCtx.drawImage(img, 0, 0);
-
-            // Clear mask
-            clearMask();
-
-            // Toggle visibility
-            dropZone.classList.add('hidden');
-            canvasContainer.classList.remove('hidden');
-            resultCanvas.classList.add('hidden');
-            downloadBtn.classList.add('hidden');
-            downloadBtn.classList.remove('flex');
-        }
-
-        // Brush Size Event
-        brushSizeInput.addEventListener('input', (e) => {
-            brushRadius = e.target.value;
-            brushSizeVal.innerText = `${brushRadius}px`;
-        });
-
-        // Drawing Mask Implementation
-        maskCanvas.addEventListener('mousedown', startDrawing);
-        maskCanvas.addEventListener('mousemove', draw);
-        maskCanvas.addEventListener('mouseup', stopDrawing);
-        maskCanvas.addEventListener('mouseleave', stopDrawing);
-
-        function getCanvasCoordinates(e) {
-            const rect = maskCanvas.getBoundingClientRect();
-            const scaleX = maskCanvas.width / rect.width;
-            const scaleY = maskCanvas.height / rect.height;
-
-            return {
-                x: (e.clientX - rect.left) * scaleX,
-                y: (e.clientY - rect.top) * scaleY
-            };
-        }
-
-        function startDrawing(e) {
-            isDrawing = true;
-            saveStrokeState();
-            draw(e);
-        }
-
-        function draw(e) {
-            if (!isDrawing) return;
-            const pos = getCanvasCoordinates(e);
-
-            maskCtx.lineWidth = brushRadius * 2;
-            maskCtx.lineCap = 'round';
-            maskCtx.lineJoin = 'round';
-            maskCtx.strokeStyle = 'rgba(239, 68, 68, 0.6)'; // Red overlay on UI
-
-            maskCtx.lineTo(pos.x, pos.y);
-            maskCtx.stroke();
-            maskCtx.beginPath();
-            maskCtx.moveTo(pos.x, pos.y);
-        }
-
-        function stopDrawing() {
-            if (!isDrawing) return;
-            isDrawing = false;
-            maskCtx.beginPath();
-        }
-
-        // Mask Utilities
-        function saveStrokeState() {
-            strokeHistory.push(maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height));
-            undoBtn.disabled = false;
-        }
-
-        function undoMask() {
-            if (strokeHistory.length > 0) {
-                const previousState = strokeHistory.pop();
-                maskCtx.putImageData(previousState, 0, 0);
-            }
-            if (strokeHistory.length === 0) {
-                undoBtn.disabled = true;
-            }
-        }
-
-        function clearMask() {
-            maskCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
-            strokeHistory = [];
-            undoBtn.disabled = true;
-        }
-
-        // Server Interaction: Send Image & Binary Mask
-        async function processImage() {
-            if (!currentImage) return;
-
-            loadingOverlay.classList.remove('hidden');
-
-            // 1. Export Original Image File
-            const imageBlob = await new Promise(resolve => imageCanvas.toBlob(resolve, 'image/jpeg', 0.95));
-
-            // 2. Export High-Contrast Binary Mask (Black Background, White Selection)
-            const offscreenMask = document.createElement('canvas');
-            offscreenMask.width = maskCanvas.width;
-            offscreenMask.height = maskCanvas.height;
-            const offCtx = offscreenMask.getContext('2d');
-
-            // Fill Black
-            offCtx.fillStyle = '#000000';
-            offCtx.fillRect(0, 0, offscreenMask.width, offscreenMask.height);
-
-            // Draw current mask in White
-            const maskData = maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
-            for (let i = 0; i < maskData.data.length; i += 4) {
-                if (maskData.data[i + 3] > 0) { // If pixel has opacity
-                    maskData.data[i] = 255;     // R
-                    maskData.data[i + 1] = 255; // G
-                    maskData.data[i + 2] = 255; // B
-                    maskData.data[i + 3] = 255; // Alpha
-                }
-            }
-            
-            // Temporary canvas to convert pixel array to blob
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = maskCanvas.width;
-            tempCanvas.height = maskCanvas.height;
-            tempCanvas.getContext('2d').putImageData(maskData, 0, 0);
-            
-            offCtx.drawImage(tempCanvas, 0, 0);
-
-            const maskBlob = await new Promise(resolve => offscreenMask.toBlob(resolve, 'image/png'));
-
-            // 3. Prepare Multipart Form Data
-            const formData = new FormData();
-            formData.append('image', imageBlob, 'image.jpg');
-            formData.append('mask', maskBlob, 'mask.png');
-            formData.append('method', selectedMode);
-
-            try {
-                const response = await fetch('/process', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (!response.ok) {
-                    const err = await response.json();
-                    alert(err.error || 'Failed to process image');
-                    loadingOverlay.classList.add('hidden');
-                    return;
-                }
-
-                // Render result image
-                const resBlob = await response.blob();
-                const resUrl = URL.createObjectURL(resBlob);
-                
-                const processedImg = new Image();
-                processedImg.onload = function() {
-                    resCtx.drawImage(processedImg, 0, 0);
-                    resultCanvas.classList.remove('hidden');
-                    
-                    // Setup Download Link
-                    downloadBtn.href = resUrl;
-                    downloadBtn.classList.remove('hidden');
-                    downloadBtn.classList.add('flex');
-                    
-                    loadingOverlay.classList.add('hidden');
-                };
-                processedImg.src = resUrl;
-
-            } catch (error) {
-                console.error('Error during processing:', error);
-                alert('Connection error or processing failed.');
-                loadingOverlay.classList.add('hidden');
-            }
-        }
-    </script>
+      }, 'image/png');
+    }
+  </script>
 </body>
 </html>
