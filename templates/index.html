@@ -1,313 +1,535 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
-
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    >
 
-<meta charset="UTF-8">
+    <title>Resimden İlgisiz Nesne Silme - Aesthetic AI Studio</title>
 
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
->
+    <style>
+        * {
+            box-sizing: border-box;
+        }
 
-<title>AI Object Eraser</title>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100%;
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Arial,
+                sans-serif;
+            background:
+                radial-gradient(circle at 20% 20%, #fff7fc, #fff0f8 45%, #fff7fc);
+            color: #4b4b61;
+        }
 
-<style>
+        body {
+            overflow-x: hidden;
+        }
 
-* {
-    box-sizing: border-box;
-}
+        /* =========================
+           HEADER
+        ========================= */
 
-html,
-body {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    min-height: 100%;
-    font-family: Arial, sans-serif;
-    background: #111;
-    color: white;
-}
+        .header {
+            background: rgba(255,255,255,.92);
+            border-bottom: 1px solid #f4d9eb;
+            min-height: 92px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 28px;
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            backdrop-filter: blur(12px);
+        }
 
-body {
-    overflow-x: hidden;
-}
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
 
-/* =====================================================
-   HEADER
-===================================================== */
+        .brand-icon {
+            width: 58px;
+            height: 58px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            background:
+                linear-gradient(135deg, #ed65bb, #9c65ed);
+            color: white;
+            box-shadow:
+                0 8px 20px rgba(211, 83, 174, .25);
+        }
 
-.header {
-    height: 70px;
-    background: #171717;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 16px;
-    border-bottom: 1px solid #292929;
-}
+        .brand-title {
+            font-size: 26px;
+            line-height: 1.15;
+            font-weight: 800;
+            color: #c62c91;
+        }
 
-.logo {
-    font-size: 19px;
-    font-weight: bold;
-}
+        .brand-subtitle {
+            margin-top: 4px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #a15be2;
+        }
 
-.header button {
-    border: none;
-    border-radius: 14px;
-    padding: 11px 16px;
-    font-size: 14px;
-    cursor: pointer;
-}
+        /* =========================
+           MAIN
+        ========================= */
 
-/* =====================================================
-   MAIN
-===================================================== */
+        .app {
+            max-width: 1450px;
+            margin: 0 auto;
+            padding: 28px;
+            display: grid;
+            grid-template-columns: 360px 1fr;
+            gap: 25px;
+        }
 
-.app {
-    min-height: calc(100vh - 70px);
-    display: flex;
-}
+        /* =========================
+           CONTROL PANEL
+        ========================= */
 
-/* =====================================================
-   SIDEBAR
-===================================================== */
+        .sidebar {
+            background: rgba(255,255,255,.9);
+            border: 1px solid #f4d8eb;
+            border-radius: 28px;
+            padding: 25px;
+            box-shadow:
+                0 12px 40px rgba(207, 93, 166, .08);
+            height: fit-content;
+        }
 
-.sidebar {
-    width: 300px;
-    background: #181818;
-    padding: 18px;
-    border-left: 1px solid #292929;
-    flex-shrink: 0;
-}
+        .section {
+            margin-bottom: 25px;
+        }
 
-.section {
-    margin-bottom: 20px;
-}
+        .section-title {
+            color: #9ca4b9;
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: .5px;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+        }
 
-.section-title {
-    font-size: 14px;
-    color: #aaa;
-    margin-bottom: 10px;
-}
+        /* =========================
+           UPLOAD
+        ========================= */
 
-/* =====================================================
-   BUTTONS
-===================================================== */
+        .upload-box {
+            border: 3px dashed #e568b5;
+            background: #fff5fa;
+            border-radius: 22px;
+            padding: 28px 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: .2s;
+        }
 
-.btn {
-    width: 100%;
-    border: 1px solid #333;
-    background: #242424;
-    color: white;
-    padding: 13px;
-    border-radius: 12px;
-    margin-bottom: 8px;
-    cursor: pointer;
-    font-size: 14px;
-}
+        .upload-box:hover {
+            background: #ffedf7;
+            transform: translateY(-1px);
+        }
 
-.btn:hover {
-    background: #303030;
-}
+        .upload-icon {
+            font-size: 38px;
+            color: #df4fa8;
+            margin-bottom: 10px;
+        }
 
-.btn.active {
-    border-color: #19e68c;
-    background: #123a2b;
-}
+        .upload-text {
+            color: #d7449c;
+            font-size: 17px;
+            font-weight: 700;
+        }
 
-.btn.primary {
-    background: #19d879;
-    color: #06160e;
-    border: none;
-    font-weight: bold;
-}
+        #fileInput {
+            display: none;
+        }
 
-.btn.danger {
-    background: #3a1717;
-    color: #ff8585;
-}
+        /* =========================
+           ALGORITHM
+        ========================= */
 
-/* =====================================================
-   WORKSPACE
-===================================================== */
+        .algorithm-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
 
-.workspace {
-    flex: 1;
-    min-width: 0;
-    padding: 20px;
-}
+        .algorithm-card {
+            border: 2px solid #f4dbea;
+            background: white;
+            border-radius: 20px;
+            padding: 18px 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: .2s;
+            color: #596075;
+        }
 
-/* =====================================================
-   UPLOAD
-===================================================== */
+        .algorithm-card:hover {
+            border-color: #e66bb7;
+        }
 
-.upload {
-    border: 2px dashed #3c3c3c;
-    border-radius: 18px;
-    padding: 25px;
-    text-align: center;
-    cursor: pointer;
-    margin-bottom: 18px;
-}
+        .algorithm-card.active {
+            border-color: #e05aaa;
+            background: #fff4fa;
+            box-shadow:
+                0 6px 18px rgba(221, 84, 169, .12);
+        }
 
-.upload:hover {
-    border-color: #19e68c;
-}
+        .algorithm-icon {
+            font-size: 30px;
+            margin-bottom: 8px;
+        }
 
-.upload input {
-    display: none;
-}
+        .algorithm-name {
+            font-weight: 800;
+            font-size: 15px;
+        }
 
-/* =====================================================
-   IMAGE AREA
-===================================================== */
+        .algorithm-desc {
+            font-size: 11px;
+            margin-top: 4px;
+            color: #999fb0;
+        }
 
-.images {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
-}
+        /* =========================
+           SELECTION
+        ========================= */
 
-.panel {
-    background: #181818;
-    border-radius: 16px;
-    overflow: hidden;
-    border: 1px solid #292929;
-}
+        .selection-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
 
-.panel-title {
-    padding: 11px 14px;
-    font-size: 13px;
-    color: #aaa;
-    border-bottom: 1px solid #292929;
-}
+        .tool-btn {
+            border: 2px solid #f1ddea;
+            background: white;
+            color: #62687b;
+            border-radius: 15px;
+            padding: 12px 8px;
+            cursor: pointer;
+            font-weight: 700;
+        }
 
-.canvas-wrap {
-    position: relative;
-    width: 100%;
-    background: #050505;
-    overflow: hidden;
-}
+        .tool-btn.active {
+            border-color: #df61b0;
+            color: #c93691;
+            background: #fff4fa;
+        }
 
-.canvas-wrap img {
-    width: 100%;
-    height: auto;
-    display: block;
-}
+        /* =========================
+           BRUSH
+        ========================= */
 
-#editCanvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    touch-action: none;
-}
+        .brush-box {
+            background: #f8f9fc;
+            border-radius: 20px;
+            padding: 18px;
+        }
 
-/* =====================================================
-   EMPTY
-===================================================== */
+        .brush-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 13px;
+            font-weight: 600;
+        }
 
-.empty {
-    min-height: 400px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #777;
-    text-align: center;
-}
+        .brush-value {
+            color: #df63b0;
+            font-weight: 800;
+        }
 
-/* =====================================================
-   STATUS
-===================================================== */
+        input[type="range"] {
+            width: 100%;
+            accent-color: #df63b0;
+        }
 
-.status {
-    margin-top: 15px;
-    padding: 12px;
-    border-radius: 12px;
-    background: #202020;
-    color: #aaa;
-    font-size: 13px;
-    display: none;
-}
+        /* =========================
+           ACTIONS
+        ========================= */
 
-.status.show {
-    display: block;
-}
+        .actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
 
-/* =====================================================
-   LOADING
-===================================================== */
+        .action-btn {
+            border: none;
+            background: #f0f3f9;
+            color: #596174;
+            border-radius: 17px;
+            padding: 14px 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 700;
+        }
 
-.loader {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,.75);
-    z-index: 999;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-}
+        .action-btn:hover {
+            background: #e9edf5;
+        }
 
-.loader.show {
-    display: flex;
-}
+        .remove-btn {
+            width: 100%;
+            border: none;
+            border-radius: 19px;
+            padding: 17px;
+            background:
+                linear-gradient(135deg, #f18bc7, #e766b5);
+            color: white;
+            font-size: 17px;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow:
+                0 9px 22px rgba(222, 87, 169, .22);
+        }
 
-.spinner {
-    width: 48px;
-    height: 48px;
-    border: 4px solid #444;
-    border-top-color: #19e68c;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-bottom: 15px;
-}
+        .remove-btn:active {
+            transform: scale(.99);
+        }
 
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
-}
+        .download-btn {
+            width: 100%;
+            margin-top: 10px;
+            border: 2px solid #e766b5;
+            background: white;
+            color: #cf439b;
+            border-radius: 17px;
+            padding: 14px;
+            font-weight: 800;
+            cursor: pointer;
+        }
 
-/* =====================================================
-   MOBILE
-===================================================== */
+        /* =========================
+           WORKSPACE
+        ========================= */
 
-@media (max-width: 800px) {
+        .workspace {
+            min-width: 0;
+        }
 
-    .app {
-        display: block;
-    }
+        .image-card {
+            background: rgba(255,255,255,.92);
+            border: 1px solid #f3d9eb;
+            border-radius: 28px;
+            padding: 18px;
+            box-shadow:
+                0 12px 40px rgba(207, 93, 166, .08);
+            margin-bottom: 22px;
+        }
 
-    .sidebar {
-        width: 100%;
-        border-left: none;
-        border-bottom: 1px solid #292929;
-    }
+        .card-title {
+            color: #d33d98;
+            font-size: 17px;
+            font-weight: 800;
+            padding: 4px 8px 15px;
+        }
 
-    .workspace {
-        padding: 10px;
-    }
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            border-radius: 19px;
+            overflow: hidden;
+            background: #f3f3f5;
+        }
 
-    .images {
-        grid-template-columns: 1fr;
-    }
+        .canvas-container img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
 
-    .logo {
-        font-size: 16px;
-    }
+        #drawingCanvas {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+            cursor: crosshair;
+        }
 
-}
+        .empty-state {
+            min-height: 500px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: #a4a8b6;
+        }
 
-</style>
+        .empty-icon {
+            font-size: 65px;
+            margin-bottom: 12px;
+        }
 
+        .empty-state h2 {
+            color: #c94a99;
+            margin: 0 0 8px;
+        }
+
+        /* =========================
+           STATUS
+        ========================= */
+
+        .status {
+            display: none;
+            margin-top: 13px;
+            padding: 12px;
+            border-radius: 14px;
+            background: #fff3fa;
+            color: #c84598;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        .status.show {
+            display: block;
+        }
+
+        /* =========================
+           LOADER
+        ========================= */
+
+        .loader {
+            position: fixed;
+            inset: 0;
+            background: rgba(255,255,255,.84);
+            backdrop-filter: blur(5px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 100;
+        }
+
+        .loader.show {
+            display: flex;
+        }
+
+        .spinner {
+            width: 52px;
+            height: 52px;
+            border: 5px solid #f5d7e9;
+            border-top-color: #df5cac;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        .loader-text {
+            color: #c83d96;
+            font-weight: 800;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* =========================
+           MOBILE
+        ========================= */
+
+        @media (max-width: 900px) {
+
+            .header {
+                padding: 13px 18px;
+            }
+
+            .brand-icon {
+                width: 48px;
+                height: 48px;
+                font-size: 25px;
+                border-radius: 15px;
+            }
+
+            .brand-title {
+                font-size: 21px;
+            }
+
+            .brand-subtitle {
+                font-size: 13px;
+            }
+
+            .app {
+                display: block;
+                padding: 15px;
+            }
+
+            .sidebar {
+                margin-bottom: 18px;
+                padding: 18px;
+            }
+
+            .image-card {
+                border-radius: 23px;
+                padding: 10px;
+            }
+
+            .empty-state {
+                min-height: 350px;
+            }
+        }
+
+        @media (max-width: 480px) {
+
+            .header {
+                min-height: 78px;
+            }
+
+            .brand-title {
+                font-size: 18px;
+            }
+
+            .brand-subtitle {
+                font-size: 12px;
+            }
+
+            .app {
+                padding: 10px;
+            }
+
+            .sidebar {
+                border-radius: 22px;
+            }
+
+            .algorithm-card {
+                padding: 15px 5px;
+            }
+
+            .card-title {
+                font-size: 15px;
+            }
+        }
+
+    </style>
 </head>
 
 
 <body>
-
 
 <!-- =====================================================
      HEADER
@@ -315,270 +537,350 @@ body {
 
 <header class="header">
 
-    <div class="logo">
-        🪄 AI Object Eraser
-    </div>
+    <div class="brand">
 
-    <button
-        onclick="downloadResult()"
-        style="background:#19d879;color:#06160e;font-weight:bold;"
-    >
-        ⬇️ تحميل
-    </button>
+        <div class="brand-icon">
+            🪄
+        </div>
+
+        <div>
+            <div class="brand-title">
+                Resimden İlgisiz<br>
+                Nesne Silme
+            </div>
+
+            <div class="brand-subtitle">
+                ✨ Aesthetic AI Studio
+            </div>
+        </div>
+
+    </div>
 
 </header>
 
 
+<!-- =====================================================
+     APP
+===================================================== -->
+
 <div class="app">
 
 
-<!-- =====================================================
-     SIDEBAR
-===================================================== -->
+    <!-- =================================================
+         SIDEBAR
+    ================================================== -->
 
-<aside class="sidebar">
-
-
-<div class="section">
-
-    <div class="section-title">
-        الصورة
-    </div>
-
-    <label class="upload">
-
-        📷
-        <br><br>
-
-        اختر صورة
-
-        <input
-            id="fileInput"
-            type="file"
-            accept="image/*"
-        >
-
-    </label>
-
-</div>
+    <aside class="sidebar">
 
 
-<!-- =====================================================
-     SELECTION
-===================================================== -->
+        <!-- UPLOAD -->
 
-<div class="section">
+        <div class="section">
 
-    <div class="section-title">
-        طريقة التحديد
-    </div>
+            <div class="section-title">
+                Upload Photo
+            </div>
 
+            <label class="upload-box">
 
-    <button
-        id="lassoBtn"
-        class="btn active"
-        onclick="setTool('lasso')"
-    >
-        ⭕ تحديد حول الشيء
-    </button>
+                <div class="upload-icon">
+                    🖼️
+                </div>
 
+                <div class="upload-text">
+                    Choose an Image
+                </div>
 
-    <button
-        id="brushBtn"
-        class="btn"
-        onclick="setTool('brush')"
-    >
-        🖌️ فرشاة
-    </button>
+                <input
+                    type="file"
+                    id="fileInput"
+                    accept="image/*"
+                >
 
+            </label>
 
-</div>
-
-
-<!-- =====================================================
-     AI / CLASSIC
-===================================================== -->
-
-<div class="section">
-
-    <div class="section-title">
-        طريقة الإزالة
-    </div>
-
-
-    <button
-        id="aiBtn"
-        class="btn active"
-        onclick="setMethod('ai')"
-    >
-        🤖 AI Removal
-        <br>
-        <small>إزالة طبيعية</small>
-    </button>
-
-
-    <button
-        id="classicBtn"
-        class="btn"
-        onclick="setMethod('classic')"
-    >
-        ⚡ Classic Removal
-        <br>
-        <small>سريع</small>
-    </button>
-
-</div>
-
-
-<!-- =====================================================
-     ACTIONS
-===================================================== -->
-
-<div class="section">
-
-    <button
-        class="btn primary"
-        onclick="removeObject()"
-    >
-        ✨ إزالة المحدد
-    </button>
-
-
-    <button
-        class="btn"
-        onclick="undoSelection()"
-    >
-        ↩️ تراجع عن التحديد
-    </button>
-
-
-    <button
-        class="btn danger"
-        onclick="clearSelection()"
-    >
-        🗑️ مسح التحديد
-    </button>
-
-</div>
-
-
-<div
-    id="status"
-    class="status"
-></div>
-
-
-</aside>
-
-
-<!-- =====================================================
-     WORKSPACE
-===================================================== -->
-
-<main class="workspace">
-
-
-<div id="emptyState" class="empty">
-
-    <div>
-
-        <div style="font-size:50px;">
-            🪄
         </div>
 
-        <h2>
-            AI Object Eraser
-        </h2>
 
-        <p>
-            اختاري صورة ثم ارسمِي حول الشيء الذي تريدين حذفه.
-        </p>
+        <!-- ALGORITHM -->
 
-        <p style="color:#777;">
-            المنطقة داخل التحديد هي التي سيتم حذفها.
-        </p>
+        <div class="section">
 
-    </div>
+            <div class="section-title">
+                Algorithm
+            </div>
 
-</div>
+            <div class="algorithm-grid">
 
 
-<div
-    id="imageArea"
-    style="display:none;"
->
+                <button
+                    type="button"
+                    class="algorithm-card active"
+                    id="aiButton"
+                >
+
+                    <div class="algorithm-icon">
+                        ✨
+                    </div>
+
+                    <div class="algorithm-name">
+                        AI LaMa
+                    </div>
+
+                    <div class="algorithm-desc">
+                        Natural reconstruction
+                    </div>
+
+                </button>
 
 
-<div class="images">
+                <button
+                    type="button"
+                    class="algorithm-card"
+                    id="classicButton"
+                >
+
+                    <div class="algorithm-icon">
+                        ⚡
+                    </div>
+
+                    <div class="algorithm-name">
+                        Classic
+                    </div>
+
+                    <div class="algorithm-desc">
+                        Fast removal
+                    </div>
+
+                </button>
+
+            </div>
+
+        </div>
 
 
-<!-- ORIGINAL -->
+        <!-- SELECTION -->
 
-<div class="panel">
+        <div class="section">
 
-    <div class="panel-title">
-        🖼️ Original
-    </div>
+            <div class="section-title">
+                Selection Tool
+            </div>
 
-    <div class="canvas-wrap">
+            <div class="selection-grid">
 
-        <img
-            id="originalImage"
+                <button
+                    type="button"
+                    class="tool-btn active"
+                    id="lassoButton"
+                >
+                    ⭕ Lasso
+                </button>
+
+                <button
+                    type="button"
+                    class="tool-btn"
+                    id="brushButton"
+                >
+                    🖌️ Brush
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- BRUSH -->
+
+        <div
+            class="section"
+            id="brushSection"
         >
 
-    </div>
+            <div class="section-title">
+                Brush Tool
+            </div>
 
-</div>
+            <div class="brush-box">
+
+                <div class="brush-header">
+
+                    <span>
+                        Brush Size
+                    </span>
+
+                    <span
+                        class="brush-value"
+                        id="brushValue"
+                    >
+                        40 px
+                    </span>
+
+                </div>
+
+                <input
+                    type="range"
+                    id="brushSize"
+                    min="10"
+                    max="120"
+                    value="40"
+                >
+
+            </div>
+
+        </div>
 
 
-<!-- WORKING -->
+        <!-- ACTIONS -->
 
-<div class="panel">
+        <div class="section">
 
-    <div class="panel-title">
-        ✨ Result / Working Image
-    </div>
+            <div class="section-title">
+                Actions
+            </div>
 
-    <div
-        class="canvas-wrap"
-        id="editWrap"
-    >
+            <div class="actions">
 
-        <img
-            id="workingImage"
+                <button
+                    type="button"
+                    class="action-btn"
+                    id="undoButton"
+                >
+                    ↩ Undo
+                </button>
+
+                <button
+                    type="button"
+                    class="action-btn"
+                    id="clearButton"
+                >
+                    🗑 Clear
+                </button>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="remove-btn"
+                id="removeButton"
+            >
+                ✨ Remove Selected Object
+            </button>
+
+
+            <button
+                type="button"
+                class="download-btn"
+                id="downloadButton"
+                style="display:none;"
+            >
+                ⬇ Download Result
+            </button>
+
+        </div>
+
+
+        <div
+            class="status"
+            id="status"
+        ></div>
+
+
+    </aside>
+
+
+    <!-- =================================================
+         WORKSPACE
+    ================================================== -->
+
+    <main class="workspace">
+
+
+        <!-- EMPTY -->
+
+        <div
+            class="image-card"
+            id="emptyCard"
         >
 
-        <canvas
-            id="editCanvas"
-        ></canvas>
+            <div class="empty-state">
 
-    </div>
+                <div>
 
-</div>
+                    <div class="empty-icon">
+                        🪄
+                    </div>
 
+                    <h2>
+                        Aesthetic AI Studio
+                    </h2>
 
-</div>
+                    <p>
+                        Upload an image to start removing
+                        unwanted objects.
+                    </p>
 
+                </div>
 
-<div
-    style="
-        margin-top:15px;
-        color:#888;
-        font-size:13px;
-        text-align:center;
-    "
->
-    ارسمِي خطًا مغلقًا حول الشيء ثم اضغطي
-    <b style="color:#19e68c;">
-        إزالة المحدد
-    </b>
-</div>
+            </div>
+
+        </div>
 
 
-</div>
+        <!-- ORIGINAL -->
+
+        <div
+            class="image-card"
+            id="originalCard"
+            style="display:none;"
+        >
+
+            <div class="card-title">
+                🖼️ Original Image (Paint Over Object)
+            </div>
+
+            <div class="canvas-container">
+
+                <img
+                    id="originalImage"
+                    alt="Original Image"
+                >
+
+                <canvas
+                    id="drawingCanvas"
+                ></canvas>
+
+            </div>
+
+        </div>
 
 
-</main>
+        <!-- OUTPUT -->
+
+        <div
+            class="image-card"
+            id="outputCard"
+            style="display:none;"
+        >
+
+            <div class="card-title">
+                ✨ Modified Output Image
+            </div>
+
+            <div class="canvas-container">
+
+                <img
+                    id="outputImage"
+                    alt="Modified Output"
+                >
+
+            </div>
+
+        </div>
+
+
+    </main>
 
 </div>
 
@@ -588,25 +890,14 @@ body {
 ===================================================== -->
 
 <div
-    id="loader"
     class="loader"
+    id="loader"
 >
 
     <div class="spinner"></div>
 
-    <div>
-        جاري إزالة العنصر...
-    </div>
-
-    <div
-        id="loaderText"
-        style="
-            margin-top:8px;
-            color:#aaa;
-            font-size:13px;
-        "
-    >
-        قد يستغرق AI بعض الوقت.
+    <div class="loader-text">
+        AI is reconstructing the background...
     </div>
 
 </div>
@@ -614,319 +905,370 @@ body {
 
 <script>
 
+    // ====================================================
+    // ELEMENTS
+    // ====================================================
 
-// =======================================================
-// VARIABLES
-// =======================================================
+    const fileInput =
+        document.getElementById("fileInput");
 
-const fileInput =
-    document.getElementById("fileInput");
+    const originalImage =
+        document.getElementById("originalImage");
 
-const originalImage =
-    document.getElementById("originalImage");
+    const outputImage =
+        document.getElementById("outputImage");
 
-const workingImage =
-    document.getElementById("workingImage");
+    const drawingCanvas =
+        document.getElementById("drawingCanvas");
 
-const editCanvas =
-    document.getElementById("editCanvas");
+    const ctx =
+        drawingCanvas.getContext("2d");
 
-const editWrap =
-    document.getElementById("editWrap");
+    const aiButton =
+        document.getElementById("aiButton");
 
-const ctx =
-    editCanvas.getContext("2d");
+    const classicButton =
+        document.getElementById("classicButton");
 
-const emptyState =
-    document.getElementById("emptyState");
+    const lassoButton =
+        document.getElementById("lassoButton");
 
-const imageArea =
-    document.getElementById("imageArea");
+    const brushButton =
+        document.getElementById("brushButton");
 
-const statusBox =
-    document.getElementById("status");
+    const brushSize =
+        document.getElementById("brushSize");
 
-const loader =
-    document.getElementById("loader");
+    const brushValue =
+        document.getElementById("brushValue");
+
+    const removeButton =
+        document.getElementById("removeButton");
+
+    const undoButton =
+        document.getElementById("undoButton");
+
+    const clearButton =
+        document.getElementById("clearButton");
+
+    const downloadButton =
+        document.getElementById("downloadButton");
+
+    const loader =
+        document.getElementById("loader");
+
+    const status =
+        document.getElementById("status");
+
+    const emptyCard =
+        document.getElementById("emptyCard");
+
+    const originalCard =
+        document.getElementById("originalCard");
+
+    const outputCard =
+        document.getElementById("outputCard");
 
 
-// =======================================================
-// STATE
-// =======================================================
+    // ====================================================
+    // STATE
+    // ====================================================
 
-let originalFile = null;
+    let selectedMethod = "ai";
 
-let workingBlob = null;
+    let selectedTool = "lasso";
 
-let currentTool = "lasso";
+    let currentFile = null;
 
-let currentMethod = "ai";
+    let workingBlob = null;
 
-let drawing = false;
+    let drawing = false;
 
-let points = [];
+    let points = [];
 
-let selectionHistory = [];
+    let history = [];
 
 
-// =======================================================
-// IMAGE UPLOAD
-// =======================================================
+    // ====================================================
+    // ALGORITHM
+    // ====================================================
 
-fileInput.addEventListener(
-    "change",
-    function () {
+    aiButton.addEventListener(
+        "click",
+        () => {
 
-        const file =
-            this.files[0];
+            selectedMethod = "ai";
 
-        if (!file) {
-            return;
+            aiButton.classList.add("active");
+
+            classicButton.classList.remove("active");
+
         }
-
-        originalFile = file;
-
-        workingBlob = file;
-
-        const url =
-            URL.createObjectURL(file);
-
-        originalImage.src = url;
-
-        workingImage.src = url;
-
-        originalImage.onload =
-            function () {
-
-                emptyState.style.display =
-                    "none";
-
-                imageArea.style.display =
-                    "block";
-
-                resizeCanvas();
-
-                clearSelection();
-
-                showStatus(
-                    "الصورة جاهزة. ارسمِي حول الشيء الذي تريدين حذفه."
-                );
-            };
-
-    }
-);
-
-
-// =======================================================
-// RESIZE CANVAS
-// =======================================================
-
-function resizeCanvas() {
-
-    if (!workingImage.naturalWidth) {
-        return;
-    }
-
-    const rect =
-        editWrap.getBoundingClientRect();
-
-    editCanvas.width =
-        workingImage.naturalWidth;
-
-    editCanvas.height =
-        workingImage.naturalHeight;
-
-    editCanvas.style.width =
-        rect.width + "px";
-
-    editCanvas.style.height =
-        (
-            workingImage.naturalHeight /
-            workingImage.naturalWidth *
-            rect.width
-        ) + "px";
-
-    redrawSelection();
-
-}
-
-
-window.addEventListener(
-    "resize",
-    resizeCanvas
-);
-
-
-// =======================================================
-// TOOL
-// =======================================================
-
-function setTool(tool) {
-
-    currentTool =
-        tool;
-
-    document
-        .getElementById("lassoBtn")
-        .classList.toggle(
-            "active",
-            tool === "lasso"
-        );
-
-    document
-        .getElementById("brushBtn")
-        .classList.toggle(
-            "active",
-            tool === "brush"
-        );
-
-    clearSelection();
-
-    showStatus(
-        tool === "lasso"
-            ? "ارسمِي دائرة مغلقة حول الشيء. كل ما بداخلها سيتم حذفه."
-            : "استخدمي الفرشاة على الشيء الذي تريدين حذفه."
     );
-}
 
 
-// =======================================================
-// METHOD
-// =======================================================
+    classicButton.addEventListener(
+        "click",
+        () => {
 
-function setMethod(method) {
+            selectedMethod = "classic";
 
-    currentMethod =
-        method;
+            classicButton.classList.add("active");
 
-    document
-        .getElementById("aiBtn")
-        .classList.toggle(
-            "active",
-            method === "ai"
-        );
+            aiButton.classList.remove("active");
 
-    document
-        .getElementById("classicBtn")
-        .classList.toggle(
-            "active",
-            method === "classic"
-        );
-
-}
+        }
+    );
 
 
-// =======================================================
-// POINTER POSITION
-// =======================================================
+    // ====================================================
+    // TOOL
+    // ====================================================
 
-function getCanvasPoint(event) {
+    lassoButton.addEventListener(
+        "click",
+        () => {
 
-    const rect =
-        editCanvas.getBoundingClientRect();
+            selectedTool = "lasso";
 
-    const scaleX =
-        editCanvas.width /
-        rect.width;
+            lassoButton.classList.add("active");
 
-    const scaleY =
-        editCanvas.height /
-        rect.height;
+            brushButton.classList.remove("active");
 
-    return {
+            clearSelection();
 
-        x:
-            (event.clientX - rect.left)
-            * scaleX,
+            showStatus(
+                "Draw around the object. Everything inside the selection will be removed."
+            );
 
-        y:
-            (event.clientY - rect.top)
-            * scaleY
-
-    };
-
-}
+        }
+    );
 
 
-// =======================================================
-// POINTER DOWN
-// =======================================================
+    brushButton.addEventListener(
+        "click",
+        () => {
 
-editCanvas.addEventListener(
-    "pointerdown",
-    function (event) {
+            selectedTool = "brush";
 
-        if (!workingImage.src) {
+            brushButton.classList.add("active");
+
+            lassoButton.classList.remove("active");
+
+            clearSelection();
+
+            showStatus(
+                "Paint directly over the object you want to remove."
+            );
+
+        }
+    );
+
+
+    // ====================================================
+    // BRUSH SIZE
+    // ====================================================
+
+    brushSize.addEventListener(
+        "input",
+        () => {
+
+            brushValue.textContent =
+                brushSize.value + " px";
+
+        }
+    );
+
+
+    // ====================================================
+    // UPLOAD
+    // ====================================================
+
+    fileInput.addEventListener(
+        "change",
+        () => {
+
+            const file =
+                fileInput.files[0];
+
+            if (!file) {
+                return;
+            }
+
+            currentFile = file;
+
+            workingBlob = file;
+
+            const url =
+                URL.createObjectURL(file);
+
+            originalImage.src = url;
+
+            outputImage.src = url;
+
+            emptyCard.style.display =
+                "none";
+
+            originalCard.style.display =
+                "block";
+
+            outputCard.style.display =
+                "block";
+
+            downloadButton.style.display =
+                "none";
+
+            originalImage.onload =
+                () => {
+
+                    resizeCanvas();
+
+                    clearSelection();
+
+                    showStatus(
+                        "Image loaded. Draw around the object you want to remove."
+                    );
+
+                };
+
+        }
+    );
+
+
+    // ====================================================
+    // CANVAS SIZE
+    // ====================================================
+
+    function resizeCanvas() {
+
+        if (!originalImage.naturalWidth) {
             return;
         }
 
-        event.preventDefault();
+        drawingCanvas.width =
+            originalImage.naturalWidth;
 
-        editCanvas.setPointerCapture(
-            event.pointerId
-        );
+        drawingCanvas.height =
+            originalImage.naturalHeight;
 
-        drawing = true;
+        drawingCanvas.style.width =
+            originalImage.clientWidth + "px";
 
-        points = [];
+        drawingCanvas.style.height =
+            originalImage.clientHeight + "px";
 
-        const p =
-            getCanvasPoint(event);
-
-        points.push(p);
-
-        redrawSelection();
+        redraw();
 
     }
-);
 
 
-// =======================================================
-// POINTER MOVE
-// =======================================================
+    window.addEventListener(
+        "resize",
+        resizeCanvas
+    );
 
-editCanvas.addEventListener(
-    "pointermove",
-    function (event) {
 
-        if (!drawing) {
-            return;
-        }
+    // ====================================================
+    // POINTER POSITION
+    // ====================================================
 
-        event.preventDefault();
+    function getPoint(event) {
 
-        const p =
-            getCanvasPoint(event);
+        const rect =
+            drawingCanvas.getBoundingClientRect();
 
-        points.push(p);
+        return {
 
-        redrawSelection();
+            x:
+                (event.clientX - rect.left)
+                *
+                drawingCanvas.width
+                /
+                rect.width,
+
+            y:
+                (event.clientY - rect.top)
+                *
+                drawingCanvas.height
+                /
+                rect.height
+
+        };
 
     }
-);
 
 
-// =======================================================
-// POINTER UP
-// =======================================================
+    // ====================================================
+    // POINTER DOWN
+    // ====================================================
 
-editCanvas.addEventListener(
-    "pointerup",
-    function (event) {
+    drawingCanvas.addEventListener(
+        "pointerdown",
+        event => {
 
-        if (!drawing) {
-            return;
+            event.preventDefault();
+
+            drawingCanvas.setPointerCapture(
+                event.pointerId
+            );
+
+            drawing = true;
+
+            points = [];
+
+            points.push(
+                getPoint(event)
+            );
+
+            redraw();
+
         }
+    );
 
-        drawing = false;
 
-        event.preventDefault();
+    // ====================================================
+    // POINTER MOVE
+    // ====================================================
 
-        if (currentTool === "lasso") {
+    drawingCanvas.addEventListener(
+        "pointermove",
+        event => {
 
-            if (points.length >= 3) {
+            if (!drawing) {
+                return;
+            }
 
-                // CLOSE THE POLYGON
+            event.preventDefault();
+
+            points.push(
+                getPoint(event)
+            );
+
+            redraw();
+
+        }
+    );
+
+
+    // ====================================================
+    // POINTER UP
+    // ====================================================
+
+    drawingCanvas.addEventListener(
+        "pointerup",
+        event => {
+
+            if (!drawing) {
+                return;
+            }
+
+            drawing = false;
+
+            if (
+                selectedTool === "lasso" &&
+                points.length >= 3
+            ) {
+
                 points.push({
                     x: points[0].x,
                     y: points[0].y
@@ -934,614 +1276,554 @@ editCanvas.addEventListener(
 
             }
 
-        }
+            saveHistory();
 
-        redrawSelection();
-
-    }
-);
-
-
-// =======================================================
-// POINTER CANCEL
-// =======================================================
-
-editCanvas.addEventListener(
-    "pointercancel",
-    function () {
-
-        drawing = false;
-
-    }
-);
-
-
-// =======================================================
-// DRAW SELECTION
-// =======================================================
-
-function redrawSelection() {
-
-    ctx.clearRect(
-        0,
-        0,
-        editCanvas.width,
-        editCanvas.height
-    );
-
-    if (points.length === 0) {
-        return;
-    }
-
-
-    // ---------------------------------------------------
-    // LASSO
-    // ---------------------------------------------------
-
-    if (currentTool === "lasso") {
-
-        ctx.beginPath();
-
-        ctx.moveTo(
-            points[0].x,
-            points[0].y
-        );
-
-        for (
-            let i = 1;
-            i < points.length;
-            i++
-        ) {
-
-            ctx.lineTo(
-                points[i].x,
-                points[i].y
-            );
-
-        }
-
-        ctx.closePath();
-
-
-        // Transparent green fill
-        ctx.fillStyle =
-            "rgba(25,230,140,0.22)";
-
-        ctx.fill();
-
-
-        // Green outline
-        ctx.strokeStyle =
-            "#19e68c";
-
-        ctx.lineWidth =
-            Math.max(
-                6,
-                editCanvas.width / 180
-            );
-
-        ctx.lineJoin =
-            "round";
-
-        ctx.lineCap =
-            "round";
-
-        ctx.stroke();
-
-    }
-
-
-    // ---------------------------------------------------
-    // BRUSH
-    // ---------------------------------------------------
-
-    else {
-
-        ctx.beginPath();
-
-        ctx.moveTo(
-            points[0].x,
-            points[0].y
-        );
-
-        for (
-            let i = 1;
-            i < points.length;
-            i++
-        ) {
-
-            ctx.lineTo(
-                points[i].x,
-                points[i].y
-            );
-
-        }
-
-        ctx.strokeStyle =
-            "rgba(25,230,140,0.70)";
-
-        ctx.lineWidth =
-            Math.max(
-                25,
-                editCanvas.width / 35
-            );
-
-        ctx.lineCap =
-            "round";
-
-        ctx.lineJoin =
-            "round";
-
-        ctx.stroke();
-
-    }
-
-}
-
-
-// =======================================================
-// CREATE MASK
-// =======================================================
-
-function createMaskBlob() {
-
-    const mask =
-        document.createElement("canvas");
-
-    mask.width =
-        editCanvas.width;
-
-    mask.height =
-        editCanvas.height;
-
-    const mctx =
-        mask.getContext("2d");
-
-
-    mctx.fillStyle =
-        "black";
-
-    mctx.fillRect(
-        0,
-        0,
-        mask.width,
-        mask.height
-    );
-
-
-    if (points.length < 2) {
-        return null;
-    }
-
-
-    // ===================================================
-    // LASSO = EVERYTHING INSIDE IS WHITE
-    // ===================================================
-
-    if (currentTool === "lasso") {
-
-        if (points.length < 3) {
-            return null;
-        }
-
-        mctx.beginPath();
-
-        mctx.moveTo(
-            points[0].x,
-            points[0].y
-        );
-
-        for (
-            let i = 1;
-            i < points.length;
-            i++
-        ) {
-
-            mctx.lineTo(
-                points[i].x,
-                points[i].y
-            );
-
-        }
-
-        // VERY IMPORTANT
-        // Fill the interior.
-        mctx.closePath();
-
-        mctx.fillStyle =
-            "white";
-
-        mctx.fill();
-
-    }
-
-
-    // ===================================================
-    // BRUSH = STROKE IS WHITE
-    // ===================================================
-
-    else {
-
-        mctx.beginPath();
-
-        mctx.moveTo(
-            points[0].x,
-            points[0].y
-        );
-
-        for (
-            let i = 1;
-            i < points.length;
-            i++
-        ) {
-
-            mctx.lineTo(
-                points[i].x,
-                points[i].y
-            );
-
-        }
-
-        mctx.strokeStyle =
-            "white";
-
-        mctx.lineWidth =
-            Math.max(
-                35,
-                mask.width / 30
-            );
-
-        mctx.lineCap =
-            "round";
-
-        mctx.lineJoin =
-            "round";
-
-        mctx.stroke();
-
-    }
-
-
-    return new Promise(
-        resolve => {
-
-            mask.toBlob(
-                blob => {
-
-                    resolve(blob);
-
-                },
-                "image/png"
-            );
+            redraw();
 
         }
     );
 
-}
 
+    // ====================================================
+    // REDRAW
+    // ====================================================
 
-// =======================================================
-// REMOVE OBJECT
-// =======================================================
-
-async function removeObject() {
-
-    if (!workingBlob) {
-
-        alert(
-            "اختاري صورة أولًا."
-        );
-
-        return;
-
-    }
-
-
-    if (points.length < 2) {
-
-        alert(
-            currentTool === "lasso"
-                ? "ارسمي تحديدًا مغلقًا حول الشيء أولًا."
-                : "ارسمي على الشيء أولًا."
-        );
-
-        return;
-
-    }
-
-
-    if (
-        currentTool === "lasso" &&
-        points.length < 4
-    ) {
-
-        alert(
-            "لازم يكون التحديد مغلقًا حول الشيء."
-        );
-
-        return;
-
-    }
-
-
-    const maskBlob =
-        await createMaskBlob();
-
-
-    if (!maskBlob) {
-
-        alert(
-            "تعذر إنشاء التحديد."
-        );
-
-        return;
-
-    }
-
-
-    // ===================================================
-    // FORM DATA
-    // ===================================================
-
-    const formData =
-        new FormData();
-
-
-    formData.append(
-        "image",
-        workingBlob,
-        "working.jpg"
-    );
-
-
-    formData.append(
-        "mask",
-        maskBlob,
-        "mask.png"
-    );
-
-
-    formData.append(
-        "method",
-        currentMethod
-    );
-
-
-    formData.append(
-        "selection_mode",
-        currentTool
-    );
-
-
-    // ===================================================
-    // LOADING
-    // ===================================================
-
-    loader.classList.add(
-        "show"
-    );
-
-
-    document
-        .getElementById("loaderText")
-        .textContent =
-            currentMethod === "ai"
-                ? "الذكاء الاصطناعي يعيد بناء الخلفية..."
-                : "جارٍ حذف العنصر...";
-
-
-    try {
-
-        const response =
-            await fetch(
-                "/process",
-                {
-                    method: "POST",
-                    body: formData
-                }
-            );
-
-
-        if (!response.ok) {
-
-            let message =
-                "حدث خطأ أثناء المعالجة.";
-
-            try {
-
-                const data =
-                    await response.json();
-
-                if (data.error) {
-                    message =
-                        data.error;
-                }
-
-            } catch (e) {}
-
-            throw new Error(
-                message
-            );
-
-        }
-
-
-        const resultBlob =
-            await response.blob();
-
-
-        // =================================================
-        // IMPORTANT:
-        // RESULT BECOMES THE NEW WORKING IMAGE
-        // =================================================
-
-        workingBlob =
-            resultBlob;
-
-
-        const resultURL =
-            URL.createObjectURL(
-                resultBlob
-            );
-
-
-        workingImage.src =
-            resultURL;
-
-
-        // Wait for the new image dimensions
-        await new Promise(
-            resolve => {
-
-                workingImage.onload =
-                    resolve;
-
-            }
-        );
-
-
-        // Clear previous selection
-        points = [];
+    function redraw() {
 
         ctx.clearRect(
             0,
             0,
-            editCanvas.width,
-            editCanvas.height
+            drawingCanvas.width,
+            drawingCanvas.height
+        );
+
+        if (points.length < 2) {
+            return;
+        }
+
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            points[0].x,
+            points[0].y
         );
 
 
-        resizeCanvas();
+        for (
+            let i = 1;
+            i < points.length;
+            i++
+        ) {
+
+            ctx.lineTo(
+                points[i].x,
+                points[i].y
+            );
+
+        }
 
 
-        showStatus(
-            "✅ تم حذف العنصر. يمكنك الآن تحديد عنصر آخر من النتيجة."
+        if (selectedTool === "lasso") {
+
+            ctx.closePath();
+
+            ctx.fillStyle =
+                "rgba(227, 87, 174, 0.20)";
+
+            ctx.fill();
+
+            ctx.strokeStyle =
+                "#e357ae";
+
+            ctx.lineWidth =
+                Math.max(
+                    5,
+                    drawingCanvas.width / 250
+                );
+
+            ctx.lineJoin =
+                "round";
+
+            ctx.lineCap =
+                "round";
+
+            ctx.stroke();
+
+        } else {
+
+            ctx.strokeStyle =
+                "rgba(227, 87, 174, 0.65)";
+
+            ctx.lineWidth =
+                Number(brushSize.value);
+
+            ctx.lineCap =
+                "round";
+
+            ctx.lineJoin =
+                "round";
+
+            ctx.stroke();
+
+        }
+
+    }
+
+
+    // ====================================================
+    // HISTORY
+    // ====================================================
+
+    function saveHistory() {
+
+        history.push(
+            points.map(
+                p => ({
+                    x: p.x,
+                    y: p.y
+                })
+            )
+        );
+
+        if (history.length > 20) {
+            history.shift();
+        }
+
+    }
+
+
+    undoButton.addEventListener(
+        "click",
+        () => {
+
+            if (history.length === 0) {
+                return;
+            }
+
+            history.pop();
+
+            points =
+                history.length
+                    ? history[history.length - 1]
+                    : [];
+
+            redraw();
+
+        }
+    );
+
+
+    // ====================================================
+    // CLEAR
+    // ====================================================
+
+    function clearSelection() {
+
+        points = [];
+
+        history = [];
+
+        ctx.clearRect(
+            0,
+            0,
+            drawingCanvas.width,
+            drawingCanvas.height
         );
 
     }
 
-    catch (error) {
 
-        console.error(
-            error
+    clearButton.addEventListener(
+        "click",
+        clearSelection
+    );
+
+
+    // ====================================================
+    // CREATE MASK
+    // ====================================================
+
+    async function createMask() {
+
+        const maskCanvas =
+            document.createElement("canvas");
+
+        maskCanvas.width =
+            drawingCanvas.width;
+
+        maskCanvas.height =
+            drawingCanvas.height;
+
+        const mctx =
+            maskCanvas.getContext("2d");
+
+
+        // BLACK = KEEP
+        mctx.fillStyle =
+            "black";
+
+        mctx.fillRect(
+            0,
+            0,
+            maskCanvas.width,
+            maskCanvas.height
         );
 
-        alert(
-            "❌ " + error.message
+
+        if (points.length < 2) {
+            return null;
+        }
+
+
+        // =================================================
+        // LASSO
+        // EVERYTHING INSIDE = WHITE
+        // =================================================
+
+        if (selectedTool === "lasso") {
+
+            if (points.length < 3) {
+                return null;
+            }
+
+            mctx.beginPath();
+
+            mctx.moveTo(
+                points[0].x,
+                points[0].y
+            );
+
+            for (
+                let i = 1;
+                i < points.length;
+                i++
+            ) {
+
+                mctx.lineTo(
+                    points[i].x,
+                    points[i].y
+                );
+
+            }
+
+            mctx.closePath();
+
+            mctx.fillStyle =
+                "white";
+
+            mctx.fill();
+
+        }
+
+
+        // =================================================
+        // BRUSH
+        // =================================================
+
+        else {
+
+            mctx.beginPath();
+
+            mctx.moveTo(
+                points[0].x,
+                points[0].y
+            );
+
+            for (
+                let i = 1;
+                i < points.length;
+                i++
+            ) {
+
+                mctx.lineTo(
+                    points[i].x,
+                    points[i].y
+                );
+
+            }
+
+            mctx.strokeStyle =
+                "white";
+
+            mctx.lineWidth =
+                Number(brushSize.value);
+
+            mctx.lineCap =
+                "round";
+
+            mctx.lineJoin =
+                "round";
+
+            mctx.stroke();
+
+        }
+
+
+        return new Promise(
+            resolve => {
+
+                maskCanvas.toBlob(
+                    blob => {
+                        resolve(blob);
+                    },
+                    "image/png"
+                );
+
+            }
         );
 
     }
 
-    finally {
 
-        loader.classList.remove(
+    // ====================================================
+    // REMOVE
+    // ====================================================
+
+    removeButton.addEventListener(
+        "click",
+        async () => {
+
+            if (!workingBlob) {
+
+                alert(
+                    "Please choose an image first."
+                );
+
+                return;
+
+            }
+
+
+            if (
+                selectedTool === "lasso" &&
+                points.length < 3
+            ) {
+
+                alert(
+                    "Please draw a closed selection around the object."
+                );
+
+                return;
+
+            }
+
+
+            if (
+                selectedTool === "brush" &&
+                points.length < 2
+            ) {
+
+                alert(
+                    "Please paint over the object first."
+                );
+
+                return;
+
+            }
+
+
+            const maskBlob =
+                await createMask();
+
+            if (!maskBlob) {
+                return;
+            }
+
+
+            const formData =
+                new FormData();
+
+
+            // IMPORTANT:
+            // Always send the CURRENT working image.
+            formData.append(
+                "image",
+                workingBlob,
+                "working.jpg"
+            );
+
+
+            formData.append(
+                "mask",
+                maskBlob,
+                "mask.png"
+            );
+
+
+            formData.append(
+                "method",
+                selectedMethod
+            );
+
+
+            formData.append(
+                "selection_mode",
+                selectedTool
+            );
+
+
+            loader.classList.add(
+                "show"
+            );
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        "/process",
+                        {
+                            method: "POST",
+                            body: formData
+                        }
+                    );
+
+
+                if (!response.ok) {
+
+                    let errorText =
+                        "Processing failed.";
+
+                    try {
+
+                        const data =
+                            await response.json();
+
+                        if (data.error) {
+                            errorText =
+                                data.error;
+                        }
+
+                    } catch (_) {}
+
+                    throw new Error(
+                        errorText
+                    );
+
+                }
+
+
+                const resultBlob =
+                    await response.blob();
+
+
+                // =================================================
+                // CURRENT RESULT BECOMES WORKING IMAGE
+                // =================================================
+
+                workingBlob =
+                    resultBlob;
+
+
+                const resultUrl =
+                    URL.createObjectURL(
+                        resultBlob
+                    );
+
+
+                outputImage.src =
+                    resultUrl;
+
+
+                // =================================================
+                // KEEP ORIGINAL IMAGE UNCHANGED
+                // =================================================
+
+                clearSelection();
+
+                downloadButton.style.display =
+                    "block";
+
+
+                showStatus(
+                    "Object removed successfully. You can remove another object from the result."
+                );
+
+            }
+
+            catch (error) {
+
+                console.error(
+                    error
+                );
+
+                alert(
+                    "❌ " +
+                    error.message
+                );
+
+            }
+
+            finally {
+
+                loader.classList.remove(
+                    "show"
+                );
+
+            }
+
+        }
+    );
+
+
+    // ====================================================
+    // DOWNLOAD
+    // ====================================================
+
+    downloadButton.addEventListener(
+        "click",
+        () => {
+
+            if (!workingBlob) {
+                return;
+            }
+
+            const url =
+                URL.createObjectURL(
+                    workingBlob
+                );
+
+            const a =
+                document.createElement("a");
+
+            a.href =
+                url;
+
+            a.download =
+                "aesthetic-ai-erased.jpg";
+
+            document.body.appendChild(a);
+
+            a.click();
+
+            a.remove();
+
+            setTimeout(
+                () => {
+                    URL.revokeObjectURL(url);
+                },
+                1000
+            );
+
+        }
+    );
+
+
+    // ====================================================
+    // STATUS
+    // ====================================================
+
+    function showStatus(message) {
+
+        status.textContent =
+            message;
+
+        status.classList.add(
             "show"
         );
 
     }
-
-}
-
-
-// =======================================================
-// CLEAR SELECTION
-// =======================================================
-
-function clearSelection() {
-
-    points = [];
-
-    ctx.clearRect(
-        0,
-        0,
-        editCanvas.width,
-        editCanvas.height
-    );
-
-}
-
-
-// =======================================================
-// UNDO SELECTION
-// =======================================================
-
-function undoSelection() {
-
-    if (points.length === 0) {
-        return;
-    }
-
-    points.pop();
-
-    redrawSelection();
-
-}
-
-
-// =======================================================
-// STATUS
-// =======================================================
-
-function showStatus(message) {
-
-    statusBox.textContent =
-        message;
-
-    statusBox.classList.add(
-        "show"
-    );
-
-}
-
-
-// =======================================================
-// DOWNLOAD
-// =======================================================
-
-function downloadResult() {
-
-    if (!workingBlob) {
-
-        alert(
-            "لا توجد نتيجة بعد."
-        );
-
-        return;
-
-    }
-
-
-    const url =
-        URL.createObjectURL(
-            workingBlob
-        );
-
-
-    const a =
-        document.createElement("a");
-
-
-    a.href =
-        url;
-
-    a.download =
-        "AI-Erased-Image.jpg";
-
-
-    document.body.appendChild(a);
-
-    a.click();
-
-    a.remove();
-
-
-    setTimeout(
-        () => URL.revokeObjectURL(url),
-        1000
-    );
-
-}
-
 
 </script>
 
