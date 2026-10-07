@@ -1,966 +1,1699 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta
         name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+        content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Image Eraser</title>
+    <meta
+        name="theme-color"
+        content="#111318"
+    >
+
+    <title>AI Image Eraser</title>
 
     <style>
+
         * {
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
         }
 
-        :root {
-            --bg: #f5f7fb;
-            --card: rgba(255,255,255,.92);
-            --text: #17181c;
-            --muted: #777b86;
-            --accent: #111318;
-            --border: #e6e7eb;
-        }
-
         body {
+
             margin: 0;
-            background:
-                radial-gradient(circle at top left, #ffffff 0%, transparent 35%),
-                var(--bg);
-            color: var(--text);
+
             font-family:
                 -apple-system,
                 BlinkMacSystemFont,
-                "SF Pro Display",
                 "Segoe UI",
-                Arial,
                 sans-serif;
+
+            background:
+                linear-gradient(
+                    180deg,
+                    #f4f5f8,
+                    #e9ebf0
+                );
+
+            color: #15161a;
+
+            min-height: 100vh;
         }
 
         .app {
-            width: min(100%, 900px);
+
+            width: 100%;
+            max-width: 720px;
+
             margin: auto;
-            padding: 22px 16px 50px;
+
+            padding:
+                20px
+                16px
+                40px;
         }
 
-        header {
+        .header {
+
             text-align: center;
-            padding: 12px 0 22px;
+
+            margin-bottom: 22px;
         }
 
         .logo {
-            font-size: clamp(30px, 8vw, 52px);
-            font-weight: 800;
-            letter-spacing: -1.5px;
+
+            width: 58px;
+            height: 58px;
+
+            margin: auto;
+
+            border-radius: 18px;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            font-size: 28px;
+
+            background: #111318;
+
+            color: white;
+
+            box-shadow:
+                0 10px 25px
+                rgba(0,0,0,.15);
+        }
+
+        h1 {
+
+            margin:
+                12px
+                0
+                5px;
+
+            font-size: 27px;
         }
 
         .subtitle {
-            margin-top: 8px;
-            color: var(--muted);
-            font-size: 15px;
+
+            color: #777b84;
+
+            font-size: 14px;
         }
 
         .card {
-            background: var(--card);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,.8);
-            border-radius: 28px;
-            padding: 18px;
-            box-shadow: 0 20px 60px rgba(20,25,40,.09);
+
+            background: white;
+
+            border-radius: 26px;
+
+            padding: 16px;
+
+            box-shadow:
+                0 15px 40px
+                rgba(0,0,0,.08);
         }
 
-        .upload-area {
-            border: 2px dashed #dfe1e7;
-            border-radius: 22px;
-            padding: 28px 18px;
+        .upload {
+
+            border:
+                2px dashed
+                #d5d7dc;
+
+            border-radius: 20px;
+
+            min-height: 150px;
+
+            display: flex;
+
+            flex-direction: column;
+
+            align-items: center;
+            justify-content: center;
+
             text-align: center;
+
+            padding: 25px;
+
+            cursor: pointer;
         }
 
         .upload-icon {
+
             font-size: 42px;
-            margin-bottom: 10px;
+
+            margin-bottom: 8px;
         }
 
         .upload-title {
-            font-size: 19px;
+
             font-weight: 700;
+
+            font-size: 17px;
         }
 
         .upload-text {
-            color: var(--muted);
-            font-size: 14px;
-            margin: 7px 0 18px;
+
+            color: #8a8e96;
+
+            font-size: 13px;
+
+            margin-top: 5px;
         }
 
         input[type="file"] {
+
             display: none;
         }
 
-        .button {
-            border: 0;
-            border-radius: 15px;
-            padding: 14px 22px;
-            font-size: 15px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: .2s;
-        }
+        .editor {
 
-        .button:active {
-            transform: scale(.97);
-        }
-
-        .primary {
-            background: var(--accent);
-            color: white;
-        }
-
-        .secondary {
-            background: #f0f1f4;
-            color: #202126;
-        }
-
-        .danger {
-            background: #fff0f0;
-            color: #d92d20;
-        }
-
-        .workspace {
             display: none;
-            margin-top: 18px;
+
+            margin-top: 15px;
         }
 
-        .canvas-wrapper {
+        .canvas-wrap {
+
             position: relative;
+
             width: 100%;
-            overflow: hidden;
+
             border-radius: 22px;
-            background: #111;
+
+            overflow: hidden;
+
+            background: #eee;
+
             touch-action: none;
-            user-select: none;
         }
 
-        #imageCanvas,
-        #paintCanvas {
+        #imageCanvas {
+
             display: block;
+
             width: 100%;
+
             height: auto;
         }
 
         #paintCanvas {
+
             position: absolute;
+
             inset: 0;
-            cursor: crosshair;
-        }
 
-        .brush-cursor {
-            position: fixed;
-            pointer-events: none;
-            display: none;
-            border: 2px solid white;
-            box-shadow:
-                0 0 0 1px #111,
-                0 4px 15px rgba(0,0,0,.25);
-            border-radius: 50%;
-            z-index: 999;
-        }
-
-        .tools {
-            margin-top: 16px;
-            display: grid;
-            gap: 12px;
-        }
-
-        .tool-row {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .tool-row .button {
-            flex: 1;
-            min-width: 100px;
-        }
-
-        .slider-box {
-            background: #f5f6f8;
-            border-radius: 16px;
-            padding: 12px 15px;
-        }
-
-        .slider-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 13px;
-            color: var(--muted);
-            margin-bottom: 8px;
-        }
-
-        input[type="range"] {
             width: 100%;
-            accent-color: #111318;
+
+            height: 100%;
+
+            touch-action: none;
         }
 
-        .remove {
-            width: 100%;
-            margin-top: 4px;
-            font-size: 16px;
-            padding: 17px;
-        }
+        .instruction {
 
-        .status {
-            display: none;
-            margin-top: 15px;
-            padding: 13px 15px;
-            border-radius: 15px;
-            background: #f0f1f4;
             text-align: center;
+
+            color: #777b84;
+
+            font-size: 14px;
+
+            padding: 13px 0;
+        }
+
+        .settings {
+
+            background: #f5f6f8;
+
+            border-radius: 20px;
+
+            padding: 16px;
+
+            margin-top: 5px;
+        }
+
+        .setting-title {
+
+            font-weight: 700;
+
+            margin-bottom: 12px;
+
+            font-size: 15px;
+        }
+
+        .methods {
+
+            display: grid;
+
+            grid-template-columns:
+                1fr 1fr;
+
+            gap: 10px;
+        }
+
+        .method {
+
+            border:
+                2px solid
+                #e1e2e6;
+
+            background: white;
+
+            border-radius: 16px;
+
+            padding: 14px 10px;
+
+            cursor: pointer;
+
+            text-align: center;
+
+            transition: .2s;
+        }
+
+        .method.active {
+
+            border-color: #111318;
+
+            background: #111318;
+
+            color: white;
+        }
+
+        .method-icon {
+
+            font-size: 24px;
+
+            margin-bottom: 5px;
+        }
+
+        .method-name {
+
+            font-weight: 700;
+
             font-size: 14px;
         }
 
-        .loading {
-            display: none;
-            text-align: center;
+        .method-description {
+
+            font-size: 11px;
+
+            opacity: .65;
+
+            margin-top: 4px;
+
+            line-height: 1.3;
+        }
+
+        .brush-box {
+
+            margin-top: 14px;
+        }
+
+        .brush-row {
+
+            display: flex;
+
+            justify-content:
+                space-between;
+
+            align-items: center;
+
+            margin-bottom: 8px;
+
+            color: #555963;
+        }
+
+        .brush-value {
+
+            font-weight: 700;
+        }
+
+        input[type="range"] {
+
+            width: 100%;
+        }
+
+        .buttons {
+
+            display: grid;
+
+            grid-template-columns:
+                1fr 1fr;
+
+            gap: 10px;
+
+            margin-top: 14px;
+        }
+
+        button {
+
+            border: 0;
+
+            border-radius: 17px;
+
+            padding: 15px;
+
+            font-size: 16px;
+
+            font-weight: 700;
+
+            cursor: pointer;
+        }
+
+        .secondary {
+
+            background: #eef0f3;
+
+            color: #25272c;
+        }
+
+        .danger {
+
+            background: #fff0f0;
+
+            color: #d73434;
+        }
+
+        .remove {
+
+            width: 100%;
+
+            margin-top: 12px;
+
+            background: #111318;
+
+            color: white;
+
+            font-size: 17px;
+
             padding: 18px;
         }
 
+        .remove:disabled {
+
+            opacity: .55;
+
+            cursor: not-allowed;
+        }
+
+        .loading {
+
+            display: none;
+
+            margin-top: 15px;
+
+            padding: 18px;
+
+            border-radius: 17px;
+
+            background: #f2f3f6;
+
+            text-align: center;
+
+            color: #555963;
+
+            font-size: 14px;
+        }
+
         .spinner {
-            width: 30px;
-            height: 30px;
-            border: 3px solid #ddd;
-            border-top-color: #111;
+
+            width: 25px;
+
+            height: 25px;
+
+            border:
+                3px solid
+                #ddd;
+
+            border-top-color:
+                #111318;
+
             border-radius: 50%;
-            animation: spin .8s linear infinite;
-            margin: auto auto 10px;
+
+            animation:
+                spin .8s linear infinite;
+
+            margin:
+                0
+                auto
+                10px;
         }
 
         @keyframes spin {
+
             to {
                 transform: rotate(360deg);
             }
+
+        }
+
+        .error {
+
+            display: none;
+
+            margin-top: 15px;
+
+            padding: 15px;
+
+            border-radius: 16px;
+
+            background: #fff0f0;
+
+            color: #c93131;
+
+            text-align: center;
+
+            font-size: 14px;
         }
 
         .result {
+
             display: none;
+
             margin-top: 18px;
         }
 
         .result-title {
-            font-size: 18px;
+
             font-weight: 800;
-            margin-bottom: 12px;
+
+            margin-bottom: 10px;
+
+            text-align: center;
         }
 
-        .result img {
+        #resultImage {
+
             width: 100%;
-            border-radius: 20px;
+
             display: block;
+
+            border-radius: 20px;
         }
 
         .download {
+
             width: 100%;
+
             margin-top: 12px;
+
+            background: #111318;
+
+            color: white;
         }
 
-        .hint {
+        .footer {
+
             text-align: center;
-            color: var(--muted);
+
+            color: #999da5;
+
             font-size: 12px;
-            margin-top: 10px;
+
+            margin-top: 25px;
         }
 
-        .before-after {
-            display: none;
-            margin-top: 15px;
+        @media (
+            max-width: 420px
+        ) {
+
+            .app {
+                padding:
+                    14px
+                    10px
+                    30px;
+            }
+
+            .card {
+                padding: 12px;
+                border-radius: 22px;
+            }
+
         }
 
-        .before-after img {
-            width: 100%;
-            border-radius: 18px;
-        }
-
-        footer {
-            text-align: center;
-            color: #9a9da5;
-            font-size: 12px;
-            margin-top: 28px;
-        }
     </style>
+
 </head>
+
 
 <body>
 
 <div class="app">
 
-    <header>
-        <div class="logo">✨ Image Eraser</div>
+    <div class="header">
+
+        <div class="logo">
+            ✨
+        </div>
+
+        <h1>
+            AI Image Eraser
+        </h1>
+
         <div class="subtitle">
             Remove unwanted objects from your photos
         </div>
-    </header>
+
+    </div>
+
 
     <div class="card">
 
+
+        <!-- ========================================= -->
         <!-- UPLOAD -->
+        <!-- ========================================= -->
 
-        <div id="uploadArea" class="upload-area">
+        <label
+            class="upload"
+            id="uploadBox"
+        >
 
-            <div class="upload-icon">🖼️</div>
+            <div class="upload-icon">
+                📷
+            </div>
 
             <div class="upload-title">
-                Upload your image
+                Choose an image
             </div>
 
             <div class="upload-text">
-                JPG, PNG or WEBP · Max 12 MB
+                JPG, PNG or WEBP
             </div>
-
-            <label for="imageInput" class="button primary">
-                Choose Image
-            </label>
 
             <input
-                id="imageInput"
                 type="file"
-                accept="image/jpeg,image/png,image/webp"
+                id="fileInput"
+                accept="image/*"
             >
 
-        </div>
+        </label>
 
 
-        <!-- WORKSPACE -->
+        <!-- ========================================= -->
+        <!-- EDITOR -->
+        <!-- ========================================= -->
 
-        <div id="workspace" class="workspace">
+        <div
+            class="editor"
+            id="editor"
+        >
 
-            <div class="canvas-wrapper">
+            <div class="canvas-wrap">
 
-                <canvas id="imageCanvas"></canvas>
+                <canvas
+                    id="imageCanvas"
+                ></canvas>
 
-                <canvas id="paintCanvas"></canvas>
+                <canvas
+                    id="paintCanvas"
+                ></canvas>
 
             </div>
 
-            <div class="hint">
+
+            <div class="instruction">
+
                 👆 Paint over the object you want to remove
+
             </div>
 
 
-            <div class="tools">
+            <!-- ===================================== -->
+            <!-- SETTINGS -->
+            <!-- ===================================== -->
 
-                <div class="slider-box">
+            <div class="settings">
 
-                    <div class="slider-top">
-                        <span>Brush Size</span>
-                        <strong>
-                            <span id="brushValue">40</span> px
-                        </strong>
+                <div class="setting-title">
+                    Removal Method
+                </div>
+
+
+                <div class="methods">
+
+
+                    <div
+                        class="method active"
+                        id="aiMethod"
+                        data-method="ai"
+                    >
+
+                        <div class="method-icon">
+                            🤖
+                        </div>
+
+                        <div class="method-name">
+                            AI Removal
+                        </div>
+
+                        <div class="method-description">
+                            Better for complex backgrounds
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        class="method"
+                        id="classicMethod"
+                        data-method="classic"
+                    >
+
+                        <div class="method-icon">
+                            ⚡
+                        </div>
+
+                        <div class="method-name">
+                            Classic
+                        </div>
+
+                        <div class="method-description">
+                            Faster for simple objects
+                        </div>
+
+                    </div>
+
+
+                </div>
+
+
+                <!-- BRUSH -->
+
+                <div class="brush-box">
+
+                    <div class="brush-row">
+
+                        <span>
+                            Brush Size
+                        </span>
+
+                        <span
+                            class="brush-value"
+                            id="brushValue"
+                        >
+                            40 px
+                        </span>
+
                     </div>
 
                     <input
-                        id="brushSize"
                         type="range"
+                        id="brushSize"
                         min="10"
-                        max="150"
+                        max="120"
                         value="40"
                     >
 
                 </div>
 
+            </div>
 
-                <div class="tool-row">
 
-                    <button
-                        id="undoBtn"
-                        class="button secondary"
-                    >
-                        ↩ Undo
-                    </button>
+            <!-- ===================================== -->
+            <!-- BUTTONS -->
+            <!-- ===================================== -->
 
-                    <button
-                        id="clearBtn"
-                        class="button danger"
-                    >
-                        Clear
-                    </button>
-
-                </div>
-
+            <div class="buttons">
 
                 <button
-                    id="removeBtn"
-                    class="button primary remove"
+                    class="secondary"
+                    id="undoButton"
                 >
-                    🪄 Remove Object
+                    ↩️ Undo
+                </button>
+
+                <button
+                    class="danger"
+                    id="clearButton"
+                >
+                    Clear
+                </button>
+
+            </div>
+
+
+            <button
+                class="remove"
+                id="removeButton"
+            >
+                ✨ Remove Object
+            </button>
+
+
+            <!-- ===================================== -->
+            <!-- LOADING -->
+            <!-- ===================================== -->
+
+            <div
+                class="loading"
+                id="loading"
+            >
+
+                <div class="spinner"></div>
+
+                <div id="loadingText">
+                    Processing image...
+                </div>
+
+            </div>
+
+
+            <!-- ===================================== -->
+            <!-- ERROR -->
+            <!-- ===================================== -->
+
+            <div
+                class="error"
+                id="errorBox"
+            ></div>
+
+
+            <!-- ===================================== -->
+            <!-- RESULT -->
+            <!-- ===================================== -->
+
+            <div
+                class="result"
+                id="resultBox"
+            >
+
+                <div class="result-title">
+                    ✨ Result
+                </div>
+
+                <img
+                    id="resultImage"
+                    alt="Result"
+                >
+
+                <button
+                    class="download"
+                    id="downloadButton"
+                >
+                    ⬇️ Download Result
                 </button>
 
             </div>
 
         </div>
 
-
-        <!-- LOADING -->
-
-        <div id="loading" class="loading">
-
-            <div class="spinner"></div>
-
-            <strong>Removing object...</strong>
-
-            <div class="hint">
-                AI-style image reconstruction is processing
-            </div>
-
-        </div>
-
-
-        <!-- STATUS -->
-
-        <div id="status" class="status"></div>
-
-
-        <!-- RESULT -->
-
-        <div id="result" class="result">
-
-            <div class="result-title">
-                ✨ Your Result
-            </div>
-
-            <img id="resultImage" alt="Processed image">
-
-            <a
-                id="downloadBtn"
-                class="button primary download"
-                download="image-eraser-result.jpg"
-            >
-                ⬇️ Download Result
-            </a>
-
-        </div>
-
     </div>
 
-    <footer>
-        Image Eraser · Built with Flask + OpenCV
-    </footer>
+
+    <div class="footer">
+
+        Image Eraser · Flask + OpenCV + AI
+
+    </div>
 
 </div>
 
 
-<div id="brushCursor" class="brush-cursor"></div>
-
-
 <script>
 
-const imageInput = document.getElementById("imageInput");
+    // =====================================================
+    // ELEMENTS
+    // =====================================================
 
-const uploadArea = document.getElementById("uploadArea");
-const workspace = document.getElementById("workspace");
+    const fileInput =
+        document.getElementById(
+            "fileInput"
+        );
 
-const imageCanvas = document.getElementById("imageCanvas");
-const paintCanvas = document.getElementById("paintCanvas");
+    const uploadBox =
+        document.getElementById(
+            "uploadBox"
+        );
 
-const imageCtx = imageCanvas.getContext("2d");
-const paintCtx = paintCanvas.getContext("2d");
+    const editor =
+        document.getElementById(
+            "editor"
+        );
 
-const brushSize = document.getElementById("brushSize");
-const brushValue = document.getElementById("brushValue");
+    const imageCanvas =
+        document.getElementById(
+            "imageCanvas"
+        );
 
-const undoBtn = document.getElementById("undoBtn");
-const clearBtn = document.getElementById("clearBtn");
-const removeBtn = document.getElementById("removeBtn");
+    const paintCanvas =
+        document.getElementById(
+            "paintCanvas"
+        );
 
-const loading = document.getElementById("loading");
-const status = document.getElementById("status");
+    const imageCtx =
+        imageCanvas.getContext(
+            "2d"
+        );
 
-const result = document.getElementById("result");
-const resultImage = document.getElementById("resultImage");
-const downloadBtn = document.getElementById("downloadBtn");
+    const paintCtx =
+        paintCanvas.getContext(
+            "2d"
+        );
 
-const brushCursor = document.getElementById("brushCursor");
+    const brushSize =
+        document.getElementById(
+            "brushSize"
+        );
 
-let imageFile = null;
-let imageObject = new Image();
+    const brushValue =
+        document.getElementById(
+            "brushValue"
+        );
 
-let strokes = [];
-let currentStroke = null;
-let drawing = false;
+    const undoButton =
+        document.getElementById(
+            "undoButton"
+        );
+
+    const clearButton =
+        document.getElementById(
+            "clearButton"
+        );
+
+    const removeButton =
+        document.getElementById(
+            "removeButton"
+        );
+
+    const loading =
+        document.getElementById(
+            "loading"
+        );
+
+    const loadingText =
+        document.getElementById(
+            "loadingText"
+        );
+
+    const errorBox =
+        document.getElementById(
+            "errorBox"
+        );
+
+    const resultBox =
+        document.getElementById(
+            "resultBox"
+        );
+
+    const resultImage =
+        document.getElementById(
+            "resultImage"
+        );
+
+    const downloadButton =
+        document.getElementById(
+            "downloadButton"
+        );
 
 
-function showStatus(message, error = false) {
+    // =====================================================
+    // VARIABLES
+    // =====================================================
 
-    status.style.display = "block";
-    status.textContent = message;
+    let originalFile = null;
 
-    if (error) {
-        status.style.background = "#fff0f0";
-        status.style.color = "#d92d20";
-    } else {
-        status.style.background = "#f0f1f4";
-        status.style.color = "#333";
-    }
-}
+    let imageObject = null;
+
+    let drawing = false;
+
+    let selectedMethod = "ai";
+
+    let history = [];
 
 
-function redraw() {
+    // =====================================================
+    // FILE UPLOAD
+    // =====================================================
 
-    paintCtx.clearRect(
-        0,
-        0,
-        paintCanvas.width,
-        paintCanvas.height
+    fileInput.addEventListener(
+        "change",
+        function () {
+
+            const file =
+                this.files[0];
+
+            if (!file) {
+                return;
+            }
+
+            originalFile = file;
+
+            const reader =
+                new FileReader();
+
+            reader.onload =
+                function (event) {
+
+                    imageObject =
+                        new Image();
+
+                    imageObject.onload =
+                        function () {
+
+                            setupCanvas();
+
+                            editor.style.display =
+                                "block";
+
+                            resultBox.style.display =
+                                "none";
+
+                            errorBox.style.display =
+                                "none";
+
+                        };
+
+                    imageObject.src =
+                        event.target.result;
+
+                };
+
+            reader.readAsDataURL(
+                file
+            );
+
+        }
     );
 
-    for (const stroke of strokes) {
 
-        paintCtx.beginPath();
+    // =====================================================
+    // SETUP CANVAS
+    // =====================================================
 
-        for (let i = 0; i < stroke.points.length; i++) {
+    function setupCanvas() {
 
-            const point = stroke.points[i];
+        imageCanvas.width =
+            imageObject.naturalWidth;
 
-            if (i === 0) {
-                paintCtx.moveTo(point.x, point.y);
-            } else {
-                paintCtx.lineTo(point.x, point.y);
-            }
-        }
+        imageCanvas.height =
+            imageObject.naturalHeight;
 
-        paintCtx.strokeStyle = "rgba(255, 50, 70, 0.58)";
-        paintCtx.lineWidth = stroke.size;
-        paintCtx.lineCap = "round";
-        paintCtx.lineJoin = "round";
+        paintCanvas.width =
+            imageObject.naturalWidth;
 
-        paintCtx.stroke();
-    }
-}
+        paintCanvas.height =
+            imageObject.naturalHeight;
 
-
-function getCanvasPoint(event) {
-
-    const rect = paintCanvas.getBoundingClientRect();
-
-    let clientX;
-    let clientY;
-
-    if (event.touches && event.touches.length) {
-        clientX = event.touches[0].clientX;
-        clientY = event.touches[0].clientY;
-    } else {
-        clientX = event.clientX;
-        clientY = event.clientY;
-    }
-
-    return {
-        x: (clientX - rect.left) *
-            (paintCanvas.width / rect.width),
-
-        y: (clientY - rect.top) *
-            (paintCanvas.height / rect.height)
-    };
-}
-
-
-function startDrawing(event) {
-
-    event.preventDefault();
-
-    drawing = true;
-
-    const point = getCanvasPoint(event);
-
-    currentStroke = {
-        size: Number(brushSize.value),
-        points: [point]
-    };
-
-    strokes.push(currentStroke);
-
-    redraw();
-}
-
-
-function draw(event) {
-
-    if (!drawing) return;
-
-    event.preventDefault();
-
-    const point = getCanvasPoint(event);
-
-    currentStroke.points.push(point);
-
-    redraw();
-}
-
-
-function stopDrawing(event) {
-
-    if (!drawing) return;
-
-    if (event) {
-        event.preventDefault();
-    }
-
-    drawing = false;
-    currentStroke = null;
-}
-
-
-paintCanvas.addEventListener(
-    "touchstart",
-    startDrawing,
-    { passive: false }
-);
-
-paintCanvas.addEventListener(
-    "touchmove",
-    draw,
-    { passive: false }
-);
-
-paintCanvas.addEventListener(
-    "touchend",
-    stopDrawing,
-    { passive: false }
-);
-
-paintCanvas.addEventListener(
-    "mousedown",
-    startDrawing
-);
-
-paintCanvas.addEventListener(
-    "mousemove",
-    draw
-);
-
-paintCanvas.addEventListener(
-    "mouseup",
-    stopDrawing
-);
-
-paintCanvas.addEventListener(
-    "mouseleave",
-    stopDrawing
-);
-
-
-brushSize.addEventListener("input", () => {
-
-    brushValue.textContent = brushSize.value;
-
-});
-
-
-undoBtn.addEventListener("click", () => {
-
-    if (strokes.length === 0) return;
-
-    strokes.pop();
-
-    redraw();
-});
-
-
-clearBtn.addEventListener("click", () => {
-
-    strokes = [];
-
-    redraw();
-
-    result.style.display = "none";
-
-});
-
-
-imageInput.addEventListener("change", () => {
-
-    const file = imageInput.files[0];
-
-    if (!file) return;
-
-    if (file.size > 12 * 1024 * 1024) {
-
-        showStatus(
-            "Image is too large. Please choose an image under 12 MB.",
-            true
-        );
-
-        return;
-    }
-
-    imageFile = file;
-
-    const reader = new FileReader();
-
-    reader.onload = function(event) {
-
-        imageObject.onload = function() {
-
-            const width = imageObject.naturalWidth;
-            const height = imageObject.naturalHeight;
-
-            imageCanvas.width = width;
-            imageCanvas.height = height;
-
-            paintCanvas.width = width;
-            paintCanvas.height = height;
-
-            imageCtx.clearRect(
-                0,
-                0,
-                width,
-                height
-            );
-
-            imageCtx.drawImage(
-                imageObject,
-                0,
-                0
-            );
-
-            strokes = [];
-
-            uploadArea.style.display = "none";
-            workspace.style.display = "block";
-
-            result.style.display = "none";
-            status.style.display = "none";
-
-            window.scrollTo({
-                top: 0,
-                behavior: "smooth"
-            });
-        };
-
-        imageObject.src = event.target.result;
-    };
-
-    reader.readAsDataURL(file);
-
-});
-
-
-removeBtn.addEventListener("click", async () => {
-
-    if (!imageFile) {
-
-        showStatus(
-            "Please choose an image first.",
-            true
-        );
-
-        return;
-    }
-
-    if (strokes.length === 0) {
-
-        showStatus(
-            "Paint over the object you want to remove first.",
-            true
-        );
-
-        return;
-    }
-
-    loading.style.display = "block";
-    result.style.display = "none";
-    status.style.display = "none";
-
-    removeBtn.disabled = true;
-    removeBtn.textContent = "Processing...";
-
-    try {
-
-        /*
-         * Create a clean black/white mask.
-         * White = area to remove.
-         */
-
-        const maskCanvas =
-            document.createElement("canvas");
-
-        maskCanvas.width = paintCanvas.width;
-        maskCanvas.height = paintCanvas.height;
-
-        const maskCtx =
-            maskCanvas.getContext("2d");
-
-        maskCtx.fillStyle = "black";
-
-        maskCtx.fillRect(
+        imageCtx.clearRect(
             0,
             0,
-            maskCanvas.width,
-            maskCanvas.height
+            imageCanvas.width,
+            imageCanvas.height
         );
 
-        for (const stroke of strokes) {
-
-            maskCtx.beginPath();
-
-            for (
-                let i = 0;
-                i < stroke.points.length;
-                i++
-            ) {
-
-                const point = stroke.points[i];
-
-                if (i === 0) {
-                    maskCtx.moveTo(
-                        point.x,
-                        point.y
-                    );
-                } else {
-                    maskCtx.lineTo(
-                        point.x,
-                        point.y
-                    );
-                }
-            }
-
-            maskCtx.strokeStyle = "white";
-            maskCtx.lineWidth = stroke.size;
-            maskCtx.lineCap = "round";
-            maskCtx.lineJoin = "round";
-
-            maskCtx.stroke();
-        }
-
-        const maskBlob =
-            await new Promise(resolve =>
-                maskCanvas.toBlob(
-                    resolve,
-                    "image/png"
-                )
-            );
-
-        const formData = new FormData();
-
-        formData.append(
-            "image",
-            imageFile
+        imageCtx.drawImage(
+            imageObject,
+            0,
+            0
         );
 
-        formData.append(
-            "mask",
-            maskBlob,
-            "mask.png"
+        paintCtx.clearRect(
+            0,
+            0,
+            paintCanvas.width,
+            paintCanvas.height
         );
 
-        const response =
-            await fetch("/process", {
-                method: "POST",
-                body: formData
-            });
+        history = [];
 
-        if (!response.ok) {
+        saveHistory();
 
-            let message =
-                "Something went wrong.";
-
-            try {
-
-                const data =
-                    await response.json();
-
-                message =
-                    data.error || message;
-
-            } catch {}
-
-            throw new Error(message);
-        }
-
-        const blob =
-            await response.blob();
-
-        const resultUrl =
-            URL.createObjectURL(blob);
-
-        resultImage.src = resultUrl;
-
-        downloadBtn.href = resultUrl;
-
-        result.style.display = "block";
-
-        showStatus(
-            "✨ Object removed successfully!"
-        );
-
-        result.scrollIntoView({
-            behavior: "smooth",
-            block: "start"
-        });
-
-    } catch (error) {
-
-        showStatus(
-            error.message ||
-            "Processing failed.",
-            true
-        );
-
-    } finally {
-
-        loading.style.display = "none";
-
-        removeBtn.disabled = false;
-
-        removeBtn.textContent =
-            "🪄 Remove Object";
     }
 
-});
+
+    // =====================================================
+    // BRUSH SIZE
+    // =====================================================
+
+    brushSize.addEventListener(
+        "input",
+        function () {
+
+            brushValue.textContent =
+                this.value + " px";
+
+        }
+    );
 
 
-/*
- * Desktop brush cursor
- */
+    // =====================================================
+    // DRAWING
+    // =====================================================
 
-paintCanvas.addEventListener(
-    "mousemove",
-    event => {
+    function getPosition(event) {
 
         const rect =
             paintCanvas.getBoundingClientRect();
 
-        const scale =
-            rect.width / paintCanvas.width;
+        let clientX;
+        let clientY;
+
+        if (
+            event.touches &&
+            event.touches.length > 0
+        ) {
+
+            clientX =
+                event.touches[0].clientX;
+
+            clientY =
+                event.touches[0].clientY;
+
+        } else {
+
+            clientX =
+                event.clientX;
+
+            clientY =
+                event.clientY;
+
+        }
+
+        const scaleX =
+            paintCanvas.width /
+            rect.width;
+
+        const scaleY =
+            paintCanvas.height /
+            rect.height;
+
+        return {
+
+            x:
+                (clientX - rect.left)
+                * scaleX,
+
+            y:
+                (clientY - rect.top)
+                * scaleY
+
+        };
+
+    }
+
+
+    function startDrawing(event) {
+
+        event.preventDefault();
+
+        drawing = true;
+
+        const pos =
+            getPosition(event);
+
+        paintCtx.beginPath();
+
+        paintCtx.moveTo(
+            pos.x,
+            pos.y
+        );
+
+        draw(event);
+
+    }
+
+
+    function draw(event) {
+
+        if (!drawing) {
+            return;
+        }
+
+        event.preventDefault();
+
+        const pos =
+            getPosition(event);
 
         const size =
-            Number(brushSize.value) * scale;
+            Number(
+                brushSize.value
+            );
 
-        brushCursor.style.width =
-            size + "px";
+        paintCtx.lineWidth =
+            size;
 
-        brushCursor.style.height =
-            size + "px";
+        paintCtx.lineCap =
+            "round";
 
-        brushCursor.style.left =
-            event.clientX - size / 2 + "px";
+        paintCtx.lineJoin =
+            "round";
 
-        brushCursor.style.top =
-            event.clientY - size / 2 + "px";
+        // Red selection overlay
+        paintCtx.strokeStyle =
+            "rgba(255, 45, 70, 0.65)";
 
-        brushCursor.style.display =
+        paintCtx.lineTo(
+            pos.x,
+            pos.y
+        );
+
+        paintCtx.stroke();
+
+    }
+
+
+    function stopDrawing() {
+
+        if (!drawing) {
+            return;
+        }
+
+        drawing = false;
+
+        paintCtx.closePath();
+
+        saveHistory();
+
+    }
+
+
+    paintCanvas.addEventListener(
+        "mousedown",
+        startDrawing
+    );
+
+    paintCanvas.addEventListener(
+        "mousemove",
+        draw
+    );
+
+    window.addEventListener(
+        "mouseup",
+        stopDrawing
+    );
+
+
+    paintCanvas.addEventListener(
+        "touchstart",
+        startDrawing,
+        { passive: false }
+    );
+
+    paintCanvas.addEventListener(
+        "touchmove",
+        draw,
+        { passive: false }
+    );
+
+    paintCanvas.addEventListener(
+        "touchend",
+        stopDrawing
+    );
+
+
+    // =====================================================
+    // HISTORY / UNDO
+    // =====================================================
+
+    function saveHistory() {
+
+        history.push(
+            paintCtx.getImageData(
+                0,
+                0,
+                paintCanvas.width,
+                paintCanvas.height
+            )
+        );
+
+        if (history.length > 20) {
+
+            history.shift();
+
+        }
+
+    }
+
+
+    undoButton.addEventListener(
+        "click",
+        function () {
+
+            if (history.length <= 1) {
+
+                paintCtx.clearRect(
+                    0,
+                    0,
+                    paintCanvas.width,
+                    paintCanvas.height
+                );
+
+                return;
+
+            }
+
+            history.pop();
+
+            const previous =
+                history[
+                    history.length - 1
+                ];
+
+            paintCtx.putImageData(
+                previous,
+                0,
+                0
+            );
+
+        }
+    );
+
+
+    // =====================================================
+    // CLEAR
+    // =====================================================
+
+    clearButton.addEventListener(
+        "click",
+        function () {
+
+            paintCtx.clearRect(
+                0,
+                0,
+                paintCanvas.width,
+                paintCanvas.height
+            );
+
+            history = [];
+
+            saveHistory();
+
+            resultBox.style.display =
+                "none";
+
+            errorBox.style.display =
+                "none";
+
+        }
+    );
+
+
+    // =====================================================
+    // METHOD SELECTION
+    // =====================================================
+
+    const methods =
+        document.querySelectorAll(
+            ".method"
+        );
+
+    methods.forEach(
+        function (method) {
+
+            method.addEventListener(
+                "click",
+                function () {
+
+                    methods.forEach(
+                        function (item) {
+
+                            item.classList.remove(
+                                "active"
+                            );
+
+                        }
+                    );
+
+                    this.classList.add(
+                        "active"
+                    );
+
+                    selectedMethod =
+                        this.dataset.method;
+
+                }
+            );
+
+        }
+    );
+
+
+    // =====================================================
+    // CREATE MASK
+    // =====================================================
+
+    function createMaskBlob() {
+
+        return new Promise(
+            function (resolve) {
+
+                const maskCanvas =
+                    document.createElement(
+                        "canvas"
+                    );
+
+                maskCanvas.width =
+                    paintCanvas.width;
+
+                maskCanvas.height =
+                    paintCanvas.height;
+
+                const maskCtx =
+                    maskCanvas.getContext(
+                        "2d"
+                    );
+
+                // Transparent background
+                maskCtx.clearRect(
+                    0,
+                    0,
+                    maskCanvas.width,
+                    maskCanvas.height
+                );
+
+                // Convert any painted pixels
+                // into white mask
+                const data =
+                    paintCtx.getImageData(
+                        0,
+                        0,
+                        paintCanvas.width,
+                        paintCanvas.height
+                    );
+
+                const pixels =
+                    data.data;
+
+                for (
+                    let i = 0;
+                    i < pixels.length;
+                    i += 4
+                ) {
+
+                    const alpha =
+                        pixels[i + 3];
+
+                    if (alpha > 0) {
+
+                        pixels[i] =
+                            255;
+
+                        pixels[i + 1] =
+                            255;
+
+                        pixels[i + 2] =
+                            255;
+
+                        pixels[i + 3] =
+                            255;
+
+                    } else {
+
+                        pixels[i] =
+                            0;
+
+                        pixels[i + 1] =
+                            0;
+
+                        pixels[i + 2] =
+                            0;
+
+                        pixels[i + 3] =
+                            255;
+
+                    }
+
+                }
+
+                maskCtx.putImageData(
+                    data,
+                    0,
+                    0
+                );
+
+                maskCanvas.toBlob(
+                    function (blob) {
+
+                        resolve(blob);
+
+                    },
+                    "image/png"
+                );
+
+            }
+        );
+
+    }
+
+
+    // =====================================================
+    // REMOVE OBJECT
+    // =====================================================
+
+    removeButton.addEventListener(
+        "click",
+        async function () {
+
+            errorBox.style.display =
+                "none";
+
+            resultBox.style.display =
+                "none";
+
+            // Make sure something was selected
+            const pixels =
+                paintCtx.getImageData(
+                    0,
+                    0,
+                    paintCanvas.width,
+                    paintCanvas.height
+                ).data;
+
+            let hasSelection = false;
+
+            for (
+                let i = 3;
+                i < pixels.length;
+                i += 4
+            ) {
+
+                if (
+                    pixels[i] > 10
+                ) {
+
+                    hasSelection = true;
+
+                    break;
+
+                }
+
+            }
+
+            if (!hasSelection) {
+
+                showError(
+                    "Please paint over the object you want to remove."
+                );
+
+                return;
+
+            }
+
+            // Loading state
+            removeButton.disabled =
+                true;
+
+            loading.style.display =
+                "block";
+
+            if (
+                selectedMethod === "ai"
+            ) {
+
+                loadingText.textContent =
+                    "🤖 AI is removing the object... This may take some time.";
+
+            } else {
+
+                loadingText.textContent =
+                    "⚡ Removing object...";
+
+            }
+
+            try {
+
+                const maskBlob =
+                    await createMaskBlob();
+
+                const formData =
+                    new FormData();
+
+                formData.append(
+                    "image",
+                    originalFile
+                );
+
+                formData.append(
+                    "mask",
+                    maskBlob,
+                    "mask.png"
+                );
+
+                formData.append(
+                    "method",
+                    selectedMethod
+                );
+
+                const response =
+                    await fetch(
+                        "/process",
+                        {
+                            method:
+                                "POST",
+
+                            body:
+                                formData
+                        }
+                    );
+
+                if (!response.ok) {
+
+                    let message =
+                        "Image processing failed.";
+
+                    try {
+
+                        const errorData =
+                            await response.json();
+
+                        if (
+                            errorData.error
+                        ) {
+
+                            message =
+                                errorData.error;
+
+                        }
+
+                        if (
+                            errorData.details
+                        ) {
+
+                            message +=
+                                " " +
+                                errorData.details;
+
+                        }
+
+                    } catch (e) {}
+
+                    throw new Error(
+                        message
+                    );
+
+                }
+
+                const blob =
+                    await response.blob();
+
+                const resultUrl =
+                    URL.createObjectURL(
+                        blob
+                    );
+
+                resultImage.src =
+                    resultUrl;
+
+                resultBox.style.display =
+                    "block";
+
+                resultBox.scrollIntoView(
+                    {
+                        behavior:
+                            "smooth",
+                        block:
+                            "start"
+                    }
+                );
+
+            } catch (error) {
+
+                console.error(
+                    error
+                );
+
+                showError(
+                    error.message ||
+                    "Something went wrong."
+                );
+
+            } finally {
+
+                removeButton.disabled =
+                    false;
+
+                loading.style.display =
+                    "none";
+
+            }
+
+        }
+    );
+
+
+    // =====================================================
+    // ERROR
+    // =====================================================
+
+    function showError(message) {
+
+        errorBox.textContent =
+            message;
+
+        errorBox.style.display =
             "block";
-    }
-);
 
-paintCanvas.addEventListener(
-    "mouseleave",
-    () => {
-        brushCursor.style.display = "none";
     }
-);
+
+
+    // =====================================================
+    // DOWNLOAD
+    // =====================================================
+
+    downloadButton.addEventListener(
+        "click",
+        function () {
+
+            if (
+                !resultImage.src
+            ) {
+
+                return;
+
+            }
+
+            const link =
+                document.createElement(
+                    "a"
+                );
+
+            link.href =
+                resultImage.src;
+
+            link.download =
+                "image-eraser-result.jpg";
+
+            document.body.appendChild(
+                link
+            );
+
+            link.click();
+
+            link.remove();
+
+        }
+    );
 
 </script>
 
 </body>
+
 </html>
