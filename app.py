@@ -22,7 +22,7 @@ def get_lama_model():
         return lama_net
 
     if not os.path.exists(MODEL_PATH):
-        print("Downloading High-Res LaMa AI model...")
+        print("Downloading LaMa AI model...")
         urllib.request.urlretrieve(MODEL_URL, MODEL_PATH)
 
     lama_net = cv2.dnn.readNetFromONNX(MODEL_PATH)
@@ -48,46 +48,56 @@ def decode_mask_file(file):
 
 
 def process_mask(mask):
-    """Refines mask, fills shapes automatically, and expands boundaries smoothly."""
+    """Clean mask thresholding and boundary expansion without central artifacts."""
     _, binary_mask = cv2.threshold(mask, 10, 255, cv2.THRESH_BINARY)
+
+    # Fill closed user contours cleanly
     contours, _ = cv2.findContours(
         binary_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
     )
-
-    filled_mask = np.zeros_like(binary_mask)
+    filled_mask = binary_mask.copy()
     for cnt in contours:
         cv2.drawContours(filled_mask, [cnt], -1, 255, thickness=cv2.FILLED)
 
-    final_mask = cv2.bitwise_or(binary_mask, filled_mask)
-
-    # Expanding mask boundary slightly to cover object edges cleanly
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9))
-    final_mask = cv2.dilate(final_mask, kernel, iterations=3)
+    # Mild dilation without creating heavy circular centers
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+    final_mask = cv2.dilate(filled_mask, kernel, iterations=2)
     return final_mask
 
 
-def run_ai_inpainting_high_res(image, mask):
-    """High-Quality Anti-Pixelation AI Object Eraser."""
+def run_ai_inpainting_fixed(image, mask):
+    """Square Aspect-Ratio Preserving LaMa Inpainting."""
     clean_mask = process_mask(mask)
 
     points = cv2.findNonZero(clean_mask)
     if points is None:
-        raise ValueError("No object selected in mask.")
+        raise ValueError("No selection found.")
 
     x, y, w, h = cv2.boundingRect(points)
     img_h, img_w = image.shape[:2]
 
-    # Dynamic padding to preserve surrounding background context
-    padding = max(w, h) // 2 + 50
-    x1, y1 = max(0, x - padding), max(0, y - padding)
-    x2, y2 = min(img_w, x + w + padding), min(img_h, y + h + padding)
+    # Force crop to be a SQUARE with sufficient background context
+    max_dim = max(w, h)
+    padding = max(max_dim // 2, 80)
+    square_size = max_dim + (padding * 2)
+
+    center_x, center_y = x + w // 2, y + h // 2
+
+    x1 = max(0, center_x - square_size // 2)
+    y1 = max(0, center_y - square_size // 2)
+    x2 = min(img_w, x1 + square_size)
+    y2 = min(img_h, y1 + square_size)
+
+    # Adjust x1, y1 if near image boundaries
+    x1 = max(0, x2 - square_size)
+    y1 = max(0, y2 - square_size)
 
     crop_img = image[y1:y2, x1:x2].copy()
     crop_mask = clean_mask[y1:y2, x1:x2].copy()
     crop_h, crop_w = crop_img.shape[:2]
 
-    # AI Model Inference at 512x512
-    ai_img = cv2.resize(crop_img, (512, 512), interpolation=cv2.INTER_LANCZOS4)
+    # Resize cleanly to 512x512
+    ai_img = cv2.resize(crop_img, (512, 512), interpolation=cv2.INTER_AREA)
     ai_mask = cv2.resize(
         crop_mask, (512, 512), interpolation=cv2.INTER_NEAREST
     )
@@ -107,19 +117,18 @@ def run_ai_inpainting_high_res(image, mask):
     result = np.clip(np.transpose(output, (1, 2, 0)), 0, 1) * 255
     result = result.astype(np.uint8)
 
-    # High-Quality Resize back using INTER_LANCZOS4 to avoid pixelation
+    # Scale back to original cropped square dimensions
     res_crop = cv2.resize(
         result, (crop_w, crop_h), interpolation=cv2.INTER_LANCZOS4
     )
 
-    # High quality multi-stage feathering mask
-    soft_mask = cv2.GaussianBlur(crop_mask, (21, 21), 0)
+    # Smooth blending mask
+    soft_mask = cv2.GaussianBlur(crop_mask, (15, 15), 0)
     soft_mask_3d = (soft_mask.astype(np.float32) / 255.0)[..., np.newaxis]
 
     orig_crop_float = crop_img.astype(np.float32)
     ai_crop_float = res_crop.astype(np.float32)
 
-    # Seamless blending
     blended = ai_crop_float * soft_mask_3d + orig_crop_float * (
         1.0 - soft_mask_3d
     )
@@ -132,7 +141,7 @@ def run_ai_inpainting_high_res(image, mask):
 
 def run_classic_inpainting(image, mask):
     clean_mask = process_mask(mask)
-    return cv2.inpaint(image, clean_mask, 7, cv2.INPAINT_TELEA)
+    return cv2.inpaint(image, clean_mask, 5, cv2.INPAINT_TELEA)
 
 
 @app.route("/")
@@ -167,11 +176,10 @@ def process_image():
 
         method = request.form.get("method", "ai")
         if method == "ai":
-            result = run_ai_inpainting_high_res(image, mask)
+            result = run_ai_inpainting_fixed(image, mask)
         else:
             result = run_classic_inpainting(image, mask)
 
-        # High Quality JPEG output without artifacts
         _, encoded_img = cv2.imencode(
             ".jpg", result, [cv2.IMWRITE_JPEG_QUALITY, 98]
         )
