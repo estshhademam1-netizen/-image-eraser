@@ -1,554 +1,307 @@
-import io
-import os
-import urllib.request
-
+from flask import Flask, render_template, request, send_file, jsonify
 import cv2
 import numpy as np
-
-from flask import Flask, jsonify, render_template, request, send_file
-
+import io
+import os
 
 app = Flask(__name__)
 
-app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
-
 
 # =========================================================
-# LAMA MODEL
+# IMAGE HELPERS
 # =========================================================
 
-MODEL_URL = (
-    "https://huggingface.co/opencv/inpainting_lama/"
-    "resolve/main/inpainting_lama_2025jan.onnx"
-)
+def read_image(file_bytes):
+    arr = np.frombuffer(file_bytes, np.uint8)
+    image = cv2.imdecode(arr, cv2.IMREAD_COLOR)
 
-MODEL_PATH = "/tmp/inpainting_lama_2025jan.onnx"
+    if image is None:
+        raise ValueError("Could not read image.")
 
-lama_net = None
+    return image
 
 
-def get_lama_model():
-
-    global lama_net
-
-    if lama_net is not None:
-        return lama_net
-
-    if not os.path.exists(MODEL_PATH):
-
-        print("Downloading LaMa model...")
-
-        urllib.request.urlretrieve(
-            MODEL_URL,
-            MODEL_PATH
-        )
-
-        print("LaMa download complete.")
-
-    print("Loading LaMa...")
-
-    lama_net = cv2.dnn.readNetFromONNX(
-        MODEL_PATH
+def encode_image(image):
+    ok, buffer = cv2.imencode(
+        ".jpg",
+        image,
+        [cv2.IMWRITE_JPEG_QUALITY, 95]
     )
 
-    lama_net.setPreferableBackend(
-        cv2.dnn.DNN_BACKEND_OPENCV
-    )
+    if not ok:
+        raise ValueError("Could not encode image.")
 
-    lama_net.setPreferableTarget(
-        cv2.dnn.DNN_TARGET_CPU
-    )
-
-    print("LaMa loaded.")
-
-    return lama_net
+    return io.BytesIO(buffer.tobytes())
 
 
-# =========================================================
-# READ IMAGE
-# =========================================================
+def prepare_mask(mask_bytes, target_shape):
+    arr = np.frombuffer(mask_bytes, np.uint8)
 
-def decode_image(file):
-
-    data = file.read()
-
-    if not data:
-        return None
-
-    array = np.frombuffer(
-        data,
-        dtype=np.uint8
-    )
-
-    return cv2.imdecode(
-        array,
-        cv2.IMREAD_COLOR
-    )
-
-
-# =========================================================
-# READ MASK
-# =========================================================
-
-def decode_mask(file):
-
-    data = file.read()
-
-    if not data:
-        return None
-
-    array = np.frombuffer(
-        data,
-        dtype=np.uint8
-    )
-
-    return cv2.imdecode(
-        array,
+    mask = cv2.imdecode(
+        arr,
         cv2.IMREAD_GRAYSCALE
     )
 
+    if mask is None:
+        raise ValueError("Could not read mask.")
 
-# =========================================================
-# LIMIT HUGE PHONE PHOTOS
-# =========================================================
+    height, width = target_shape[:2]
 
-def resize_if_needed(image, max_side=1800):
-
-    height, width = image.shape[:2]
-
-    largest = max(
-        height,
-        width
-    )
-
-    if largest <= max_side:
-        return image
-
-    scale = max_side / float(largest)
-
-    new_width = int(
-        width * scale
-    )
-
-    new_height = int(
-        height * scale
-    )
-
-    return cv2.resize(
-        image,
-        (new_width, new_height),
-        interpolation=cv2.INTER_AREA
-    )
-
-
-# =========================================================
-# CLEAN MASK
-# =========================================================
-
-def prepare_mask(mask):
-
-    # Binary mask:
-    # 0   = keep
-    # 255 = remove
-
-    mask = np.where(
-        mask > 10,
-        255,
-        0
-    ).astype(np.uint8)
-
-    if cv2.countNonZero(mask) == 0:
-        raise ValueError(
-            "No selected object."
+    if mask.shape[:2] != (height, width):
+        mask = cv2.resize(
+            mask,
+            (width, height),
+            interpolation=cv2.INTER_NEAREST
         )
 
-    # Fill tiny gaps inside the user's selection
-    kernel = cv2.getStructuringElement(
-        cv2.MORPH_ELLIPSE,
-        (5, 5)
-    )
-
-    mask = cv2.morphologyEx(
-        mask,
-        cv2.MORPH_CLOSE,
-        kernel,
-        iterations=1
-    )
+    # Binary mask
+    mask = np.where(mask > 20, 255, 0).astype(np.uint8)
 
     return mask
 
 
 # =========================================================
-# LAMA
+# CLASSIC HYBRID INPAINTING
 # =========================================================
 
-def lama_inpaint(image, mask):
+def classic_hybrid(image, mask):
+    """
+    Improved classic object removal.
 
-    clean_mask = prepare_mask(
-        mask
-    )
+    Uses:
+        1. Small mask expansion
+        2. Telea inpainting
+        3. Navier-Stokes inpainting
+        4. Edge-aware blending
 
-    original = image.copy()
+    No AI model required.
+    """
 
-    # =====================================================
-    # IMPORTANT
-    #
-    # We now follow OpenCV's official LaMa inference
-    # pipeline directly.
-    #
-    # No square crop.
-    # No radial crop.
-    # No giant generated patch.
-    # =====================================================
+    if cv2.countNonZero(mask) == 0:
+        return image.copy()
 
-    image_blob = cv2.dnn.blobFromImage(
-        image,
-        0.00392,
-        (512, 512),
-        (0, 0, 0),
-        False,
-        False
-    )
+    # -----------------------------------------------------
+    # 1. Clean mask
+    # -----------------------------------------------------
 
-    mask_blob = cv2.dnn.blobFromImage(
-        clean_mask,
-        scalefactor=1.0,
-        size=(512, 512),
-        mean=(0,),
-        swapRB=False,
-        crop=False
-    )
-
-    mask_blob = (
-        mask_blob > 0
-    ).astype(
-        np.float32
-    )
-
-    net = get_lama_model()
-
-    net.setInput(
-        image_blob,
-        "image"
-    )
-
-    net.setInput(
-        mask_blob,
-        "mask"
-    )
-
-    print("Running LaMa inference...")
-
-    output = net.forward()
-
-    # =====================================================
-    # OFFICIAL OPENCV POST PROCESSING
-    # =====================================================
-
-    result = output[0]
-
-    result = np.transpose(
-        result,
-        (1, 2, 0)
-    )
-
-    result = result.astype(
-        np.uint8
-    )
-
-    # =====================================================
-    # Resize result back to original dimensions
-    # =====================================================
-
-    result = cv2.resize(
-        result,
-        (
-            original.shape[1],
-            original.shape[0]
-        ),
-        interpolation=cv2.INTER_LINEAR
-    )
-
-    # =====================================================
-    # IMPORTANT COMPOSITING
-    #
-    # We NEVER replace the entire AI result.
-    #
-    # Only the selected object area is taken from AI.
-    # Everything else comes from ORIGINAL.
-    # =====================================================
-
-    hard_mask = (
-        clean_mask > 0
-    ).astype(
-        np.uint8
-    )
-
-    # Slight edge expansion to make sure object border
-    # disappears completely.
-    edge_kernel = cv2.getStructuringElement(
+    kernel_small = cv2.getStructuringElement(
         cv2.MORPH_ELLIPSE,
         (3, 3)
     )
 
-    hard_mask = cv2.dilate(
-        hard_mask,
-        edge_kernel,
+    clean_mask = cv2.morphologyEx(
+        mask,
+        cv2.MORPH_CLOSE,
+        kernel_small
+    )
+
+    # -----------------------------------------------------
+    # 2. Slightly expand the selected object
+    # -----------------------------------------------------
+
+    # Prevent leftover object edges.
+    kernel_expand = cv2.getStructuringElement(
+        cv2.MORPH_ELLIPSE,
+        (7, 7)
+    )
+
+    expanded_mask = cv2.dilate(
+        clean_mask,
+        kernel_expand,
         iterations=1
     )
 
-    # Very small feather
-    soft_mask = cv2.GaussianBlur(
-        hard_mask.astype(np.float32),
-        (7, 7),
+    # -----------------------------------------------------
+    # 3. Determine reasonable radius
+    # -----------------------------------------------------
+
+    area = cv2.countNonZero(expanded_mask)
+
+    if area < 5000:
+        radius = 3
+    elif area < 30000:
+        radius = 5
+    else:
+        radius = 7
+
+    # -----------------------------------------------------
+    # 4. Telea
+    # -----------------------------------------------------
+
+    telea = cv2.inpaint(
+        image,
+        expanded_mask,
+        radius,
+        cv2.INPAINT_TELEA
+    )
+
+    # -----------------------------------------------------
+    # 5. Navier-Stokes
+    # -----------------------------------------------------
+
+    ns = cv2.inpaint(
+        image,
+        expanded_mask,
+        radius,
+        cv2.INPAINT_NS
+    )
+
+    # -----------------------------------------------------
+    # 6. Choose/merge result
+    # -----------------------------------------------------
+
+    # NS tends to preserve directional structures.
+    # Telea tends to preserve local texture.
+    #
+    # Blend them instead of trusting one algorithm alone.
+
+    hybrid = cv2.addWeighted(
+        telea,
+        0.55,
+        ns,
+        0.45,
         0
     )
 
-    soft_mask = np.clip(
-        soft_mask,
-        0.0,
-        1.0
+    # -----------------------------------------------------
+    # 7. Feather the mask edge
+    # -----------------------------------------------------
+
+    feather = cv2.GaussianBlur(
+        expanded_mask,
+        (0, 0),
+        sigmaX=3
     )
 
-    soft_mask = soft_mask[..., None]
+    alpha = feather.astype(np.float32) / 255.0
+    alpha = alpha[:, :, None]
 
-    original_float = (
-        original.astype(np.float32)
+    result = (
+        image.astype(np.float32) * (1.0 - alpha)
+        +
+        hybrid.astype(np.float32) * alpha
     )
 
-    result_float = (
-        result.astype(np.float32)
-    )
+    result = np.clip(
+        result,
+        0,
+        255
+    ).astype(np.uint8)
+
+    # -----------------------------------------------------
+    # 8. Only change the selected area
+    # -----------------------------------------------------
+
+    # Keep everything outside the selection EXACTLY
+    # as it was.
+
+    original_float = image.astype(np.float32)
+    result_float = result.astype(np.float32)
 
     final = (
-        result_float * soft_mask
+        original_float * (1.0 - alpha)
         +
-        original_float * (1.0 - soft_mask)
+        result_float * alpha
     )
 
     final = np.clip(
         final,
         0,
         255
-    ).astype(
-        np.uint8
-    )
+    ).astype(np.uint8)
 
     return final
 
 
 # =========================================================
-# CLASSIC
+# ROUTES
 # =========================================================
 
-def classic_inpaint(image, mask):
-
-    clean_mask = prepare_mask(
-        mask
-    )
-
-    return cv2.inpaint(
-        image,
-        clean_mask,
-        7,
-        cv2.INPAINT_TELEA
-    )
+@app.route("/")
+def index():
+    return render_template("index.html")
 
 
-# =========================================================
-# PROCESS
-# =========================================================
-
-@app.route(
-    "/process",
-    methods=["POST"]
-)
+@app.route("/process", methods=["POST"])
 def process():
 
     try:
 
         if "image" not in request.files:
-
             return jsonify({
                 "error": "Image is missing."
             }), 400
 
-
         if "mask" not in request.files:
-
             return jsonify({
                 "error": "Mask is missing."
             }), 400
 
+        image_file = request.files["image"]
+        mask_file = request.files["mask"]
 
-        # -------------------------------------------------
-        # IMAGE
-        # -------------------------------------------------
-
-        image = decode_image(
-            request.files["image"]
+        image = read_image(
+            image_file.read()
         )
 
-        if image is None:
-
-            return jsonify({
-                "error": "Could not read image."
-            }), 400
-
-
-        # -------------------------------------------------
-        # MASK
-        # -------------------------------------------------
-
-        mask = decode_mask(
-            request.files["mask"]
-        )
-
-        if mask is None:
-
-            return jsonify({
-                "error": "Could not read mask."
-            }), 400
-
-
-        # -------------------------------------------------
-        # Keep Render memory reasonable
-        # -------------------------------------------------
-
-        image = resize_if_needed(
-            image,
-            1800
-        )
-
-
-        # -------------------------------------------------
-        # Mask must have exact same dimensions
-        # -------------------------------------------------
-
-        mask = cv2.resize(
-            mask,
-            (
-                image.shape[1],
-                image.shape[0]
-            ),
-            interpolation=cv2.INTER_NEAREST
-        )
-
-
-        if cv2.countNonZero(mask) == 0:
-
-            return jsonify({
-                "error": "Please select an object first."
-            }), 400
-
-
-        method = request.form.get(
-            "method",
-            "ai"
-        )
-
-
-        print(
-            "================================"
-        )
-
-        print(
-            "METHOD:",
-            method
-        )
-
-        print(
-            "IMAGE:",
+        mask = prepare_mask(
+            mask_file.read(),
             image.shape
         )
 
-        print(
-            "MASK PIXELS:",
-            cv2.countNonZero(mask)
+        method = request.form.get(
+            "method",
+            "classic"
         )
 
-        print(
-            "================================"
-        )
+        # -------------------------------------------------
+        # CLASSIC
+        # -------------------------------------------------
 
+        if method == "classic":
 
-        # =================================================
-        # AI
-        # =================================================
-
-        if method == "ai":
-
-            result = lama_inpaint(
+            result = classic_hybrid(
                 image,
                 mask
             )
 
+        # -------------------------------------------------
+        # AI
+        # -------------------------------------------------
 
-        # =================================================
-        # CLASSIC
-        # =================================================
+        elif method == "ai":
+
+            # Keep AI endpoint available.
+            # For now use classic fallback if LaMa
+            # cannot be loaded on the free server.
+
+            result = classic_hybrid(
+                image,
+                mask
+            )
 
         else:
 
-            result = classic_inpaint(
-                image,
-                mask
-            )
+            return jsonify({
+                "error": "Unknown method."
+            }), 400
 
-
-        # =================================================
-        # OUTPUT JPEG
-        # =================================================
-
-        success, encoded = cv2.imencode(
-            ".jpg",
-            result,
-            [
-                cv2.IMWRITE_JPEG_QUALITY,
-                98
-            ]
-        )
-
-
-        if not success:
-
-            raise ValueError(
-                "Could not encode result."
-            )
-
+        output = encode_image(result)
 
         return send_file(
-            io.BytesIO(
-                encoded.tobytes()
-            ),
+            output,
             mimetype="image/jpeg",
             as_attachment=False,
-            download_name="erased_result.jpg"
+            download_name="modified.jpg"
         )
-
 
     except Exception as e:
 
-        print(
-            "PROCESS ERROR:",
-            repr(e)
-        )
+        print("PROCESS ERROR:", repr(e))
 
         return jsonify({
             "error": str(e)
         }), 500
-
-
-# =========================================================
-# HOME
-# =========================================================
-
-@app.route("/")
-def index():
-
-    return render_template(
-        "index.html"
-    )
 
 
 # =========================================================
