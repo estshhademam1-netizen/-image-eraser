@@ -3,3 +3,5 @@ opencv-python-headless
 Pillow
 numpy
 gunicorn
+simple-lama-inpainting
+torch
