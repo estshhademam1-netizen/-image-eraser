@@ -1,82 +1,94 @@
 import os
 
-# =========================================================
-# IMPORTANT:
-# Render Free/CPU has no NVIDIA GPU.
-# Force PyTorch to stay away from CUDA.
-# =========================================================
+# ============================================================
+# FORCE CPU - Render Free does not have NVIDIA GPU
+# ============================================================
+
 os.environ["CUDA_VISIBLE_DEVICES"] = ""
-os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 
 import io
 import traceback
 
 import cv2
 import numpy as np
+
 from PIL import Image
-from flask import Flask, request, jsonify, send_file
+
+from flask import (
+    Flask,
+    request,
+    jsonify,
+    send_file,
+    render_template
+)
 
 
-# =========================================================
-# Flask
-# =========================================================
+# ============================================================
+# FLASK
+# ============================================================
 
 app = Flask(__name__)
 
-app.config["MAX_CONTENT_LENGTH"] = 25 * 1024 * 1024  # 25 MB
+app.config["MAX_CONTENT_LENGTH"] = 25 * 1024 * 1024
 
 
-# =========================================================
-# LaMa
-# =========================================================
+# ============================================================
+# LAMA STATE
+# ============================================================
 
 lama = None
 lama_error = None
 
 
-def load_lama():
-    """
-    Load LaMa explicitly on CPU.
+# ============================================================
+# LOAD LAMA
+# ============================================================
 
-    Render Free does not have an NVIDIA GPU.
-    """
+def get_lama():
 
     global lama
     global lama_error
 
+    # Already loaded
     if lama is not None:
         return lama
 
     try:
+
         import torch
         from simple_lama_inpainting import SimpleLama
 
         print("=" * 60)
         print("Loading LaMa...")
-        print("PyTorch version:", torch.__version__)
+        print("PyTorch:", torch.__version__)
         print("CUDA available:", torch.cuda.is_available())
-        print("Using device: CPU")
+        print("Device: CPU")
         print("=" * 60)
 
-        # FORCE CPU
+        # IMPORTANT:
+        # Force LaMa to CPU
         device = torch.device("cpu")
 
-        lama = SimpleLama(device=device)
-
-        print("=" * 60)
-        print("LaMa loaded successfully on CPU!")
-        print("=" * 60)
+        lama = SimpleLama(
+            device=device
+        )
 
         lama_error = None
+
+        print("=" * 60)
+        print("LaMa loaded successfully!")
+        print("Running on CPU")
+        print("=" * 60)
 
         return lama
 
     except Exception as e:
+
         lama = None
         lama_error = repr(e)
 
         print("=" * 60)
-        print("LaMa could not be loaded:")
+        print("LaMa loading failed:")
         print(repr(e))
         print("=" * 60)
 
@@ -85,69 +97,51 @@ def load_lama():
         return None
 
 
-# =========================================================
-# Image helpers
-# =========================================================
+# ============================================================
+# READ IMAGE
+# ============================================================
 
-def read_image(file_storage):
-    """
-    Read uploaded image into OpenCV BGR format.
-    """
+def read_uploaded_image(file):
 
-    if file_storage is None:
+    if file is None:
         return None
 
-    data = file_storage.read()
+    data = file.read()
 
     if not data:
         return None
 
-    array = np.frombuffer(data, dtype=np.uint8)
+    array = np.frombuffer(
+        data,
+        dtype=np.uint8
+    )
 
-    image = cv2.imdecode(array, cv2.IMREAD_COLOR)
+    image = cv2.imdecode(
+        array,
+        cv2.IMREAD_COLOR
+    )
 
     return image
 
 
-def encode_image(image, extension=".png"):
-    """
-    Encode OpenCV image to bytes.
-    """
+# ============================================================
+# READ MASK
+# ============================================================
 
-    success, encoded = cv2.imencode(
-        extension,
-        image
-    )
+def read_mask(file, width, height):
 
-    if not success:
-        raise ValueError("Could not encode output image.")
+    if file is None:
+        return None
 
-    return encoded.tobytes()
-
-
-# =========================================================
-# Mask preparation
-# =========================================================
-
-def prepare_mask(mask_file, target_size):
-    """
-    Prepare uploaded mask.
-
-    White   = remove
-    Black   = keep
-
-    target_size = (width, height)
-    """
-
-    if mask_file is None:
-        raise ValueError("Mask is required.")
-
-    data = mask_file.read()
+    data = file.read()
 
     if not data:
-        raise ValueError("Mask file is empty.")
+        return None
 
-    array = np.frombuffer(data, dtype=np.uint8)
+    array = np.frombuffer(
+        data,
+        dtype=np.uint8
+    )
 
     mask = cv2.imdecode(
         array,
@@ -155,20 +149,17 @@ def prepare_mask(mask_file, target_size):
     )
 
     if mask is None:
-        raise ValueError("Invalid mask image.")
+        return None
 
-    width, height = target_size
+    # Make mask exactly same size as image
+    mask = cv2.resize(
+        mask,
+        (width, height),
+        interpolation=cv2.INTER_NEAREST
+    )
 
-    # Resize mask to original image dimensions
-    if mask.shape[1] != width or mask.shape[0] != height:
-
-        mask = cv2.resize(
-            mask,
-            (width, height),
-            interpolation=cv2.INTER_NEAREST
-        )
-
-    # Convert everything into a clean binary mask
+    # White = remove
+    # Black = keep
     mask = np.where(
         mask > 20,
         255,
@@ -178,70 +169,69 @@ def prepare_mask(mask_file, target_size):
     return mask
 
 
-# =========================================================
-# Mask improvement
-# =========================================================
+# ============================================================
+# IMPROVE MASK
+# ============================================================
 
 def improve_mask(mask):
-    """
-    Clean small holes/noise in the mask.
 
-    White = object to remove.
-    """
-
-    kernel_small = np.ones(
-        (3, 3),
-        np.uint8
-    )
-
-    kernel_medium = np.ones(
+    # Close small holes
+    kernel_close = np.ones(
         (5, 5),
         np.uint8
     )
 
-    # Remove tiny holes/noise
     mask = cv2.morphologyEx(
         mask,
         cv2.MORPH_CLOSE,
-        kernel_medium,
+        kernel_close,
         iterations=1
+    )
+
+    # Remove tiny noise
+    kernel_open = np.ones(
+        (3, 3),
+        np.uint8
     )
 
     mask = cv2.morphologyEx(
         mask,
         cv2.MORPH_OPEN,
-        kernel_small,
+        kernel_open,
         iterations=1
     )
 
-    # Small dilation helps avoid leaving object edges
+    # Slight expansion around object edges
+    kernel_dilate = np.ones(
+        (3, 3),
+        np.uint8
+    )
+
     mask = cv2.dilate(
         mask,
-        kernel_small,
+        kernel_dilate,
         iterations=1
     )
 
     return mask
 
 
-# =========================================================
-# LaMa Inpainting
-# =========================================================
+# ============================================================
+# LAMA INPAINTING
+# ============================================================
 
-def lama_inpaint(image, mask):
-    """
-    Run LaMa on CPU.
-    """
+def run_lama(image, mask):
 
-    model = load_lama()
+    model = get_lama()
 
     if model is None:
+
         raise RuntimeError(
             "LaMa is not available. "
             + str(lama_error)
         )
 
-    # OpenCV BGR -> PIL RGB
+    # OpenCV BGR -> RGB
     rgb = cv2.cvtColor(
         image,
         cv2.COLOR_BGR2RGB
@@ -251,18 +241,17 @@ def lama_inpaint(image, mask):
         rgb
     )
 
-    # Mask must be grayscale
+    # Mask
     pil_mask = Image.fromarray(
         mask
     ).convert("L")
 
     print(
         "Running LaMa...",
-        "Image:",
         pil_image.size
     )
 
-    # Run model
+    # AI INPAINTING
     result = model(
         pil_image,
         pil_mask
@@ -282,68 +271,58 @@ def lama_inpaint(image, mask):
     return result_bgr
 
 
-# =========================================================
-# Classic fallback
-# =========================================================
+# ============================================================
+# CLASSIC FALLBACK
+# ============================================================
 
-def classic_inpaint(image, mask):
-    """
-    OpenCV fallback.
-    """
+def run_classic(image, mask):
 
-    # Slightly enlarge mask to remove edge remnants
     kernel = np.ones(
         (3, 3),
         np.uint8
     )
 
-    clean_mask = cv2.dilate(
+    mask = cv2.dilate(
         mask,
         kernel,
         iterations=1
     )
 
-    # Telea
-    telea = cv2.inpaint(
+    result = cv2.inpaint(
         image,
-        clean_mask,
+        mask,
         5,
         cv2.INPAINT_TELEA
-    )
-
-    # Navier-Stokes
-    ns = cv2.inpaint(
-        image,
-        clean_mask,
-        5,
-        cv2.INPAINT_NS
-    )
-
-    # Blend both
-    result = cv2.addWeighted(
-        telea,
-        0.65,
-        ns,
-        0.35,
-        0
     )
 
     return result
 
 
-# =========================================================
-# Health
-# =========================================================
+# ============================================================
+# HOME
+# ============================================================
+
+@app.route("/", methods=["GET"])
+def home():
+
+    return render_template(
+        "index.html"
+    )
+
+
+# ============================================================
+# HEALTH
+# ============================================================
 
 @app.route("/health", methods=["GET"])
 def health():
 
     try:
+
         import torch
 
         return jsonify({
             "status": "ok",
-            "service": "image-eraser",
             "pytorch": torch.__version__,
             "cuda_available": torch.cuda.is_available(),
             "device": "cpu",
@@ -355,140 +334,120 @@ def health():
 
         return jsonify({
             "status": "ok",
-            "service": "image-eraser",
             "lama_loaded": lama is not None,
             "lama_error": lama_error,
             "error": repr(e)
         })
 
 
-# =========================================================
-# Home
-# =========================================================
-
-@app.route("/", methods=["GET"])
-def home():
-
-    return """
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport"
-              content="width=device-width, initial-scale=1.0">
-
-        <title>AI Image Eraser</title>
-
-        <style>
-            body {
-                font-family: Arial, sans-serif;
-                padding: 30px;
-                text-align: center;
-            }
-
-            h1 {
-                margin-bottom: 10px;
-            }
-
-            p {
-                color: #666;
-            }
-
-            .status {
-                margin-top: 20px;
-                padding: 15px;
-                border-radius: 10px;
-                background: #f3f3f3;
-            }
-        </style>
-    </head>
-
-    <body>
-
-        <h1>AI Image Eraser</h1>
-
-        <p>
-            LaMa AI Inpainting Server
-        </p>
-
-        <div class="status">
-            Backend is running.
-        </div>
-
-    </body>
-    </html>
-    """
-
-
-# =========================================================
-# Process
-# =========================================================
+# ============================================================
+# PROCESS
+# ============================================================
 
 @app.route("/process", methods=["POST"])
 def process():
 
     try:
 
-        # -------------------------------------------------
-        # Get image
-        # -------------------------------------------------
+        print("=" * 60)
+        print("NEW IMAGE PROCESS REQUEST")
+        print("=" * 60)
 
-        image_file = request.files.get("image")
+        # ----------------------------------------------------
+        # IMAGE
+        # ----------------------------------------------------
+
+        image_file = request.files.get(
+            "image"
+        )
 
         if image_file is None:
+
             return jsonify({
                 "success": False,
                 "error": "Image is required."
             }), 400
 
-        image = read_image(
+        image = read_uploaded_image(
             image_file
         )
 
         if image is None:
+
             return jsonify({
                 "success": False,
                 "error": "Could not read image."
             }), 400
 
-        original_height, original_width = image.shape[:2]
+        height, width = image.shape[:2]
 
         print(
-            f"Input image: "
-            f"{original_width}x{original_height}"
+            f"Image size: {width} x {height}"
         )
 
-        # -------------------------------------------------
-        # Get mask
-        # -------------------------------------------------
 
-        mask_file = request.files.get("mask")
+        # ----------------------------------------------------
+        # MASK
+        # ----------------------------------------------------
+
+        mask_file = request.files.get(
+            "mask"
+        )
 
         if mask_file is None:
+
             return jsonify({
                 "success": False,
                 "error": "Mask is required."
             }), 400
 
-        mask = prepare_mask(
+        mask = read_mask(
             mask_file,
-            (
-                original_width,
-                original_height
-            )
+            width,
+            height
         )
 
-        # -------------------------------------------------
-        # Improve mask
-        # -------------------------------------------------
+        if mask is None:
+
+            return jsonify({
+                "success": False,
+                "error": "Could not read mask."
+            }), 400
+
+
+        # ----------------------------------------------------
+        # CHECK MASK
+        # ----------------------------------------------------
+
+        mask_pixels = cv2.countNonZero(
+            mask
+        )
+
+        print(
+            "Mask pixels:",
+            mask_pixels
+        )
+
+        if mask_pixels == 0:
+
+            return jsonify({
+                "success": False,
+                "error": "Mask is empty. Please select an object."
+            }), 400
+
+
+        # ----------------------------------------------------
+        # CLEAN MASK
+        # ----------------------------------------------------
 
         mask = improve_mask(
             mask
         )
 
-        # -------------------------------------------------
-        # Method
-        # -------------------------------------------------
+
+        # ----------------------------------------------------
+        # METHOD
+        # ----------------------------------------------------
 
         method = request.form.get(
             "method",
@@ -496,13 +455,14 @@ def process():
         ).lower()
 
         print(
-            "Requested method:",
+            "Method:",
             method
         )
 
-        # -------------------------------------------------
-        # AI / LaMa
-        # -------------------------------------------------
+
+        # ----------------------------------------------------
+        # LAMA
+        # ----------------------------------------------------
 
         if method in [
             "ai",
@@ -512,102 +472,126 @@ def process():
 
             try:
 
-                result = lama_inpaint(
+                result = run_lama(
                     image,
                     mask
                 )
 
                 used_method = "lama"
 
-            except Exception as lama_exception:
+            except Exception as e:
 
                 print("=" * 60)
-                print("LaMa processing failed:")
-                print(repr(lama_exception))
+                print("LAMA PROCESSING ERROR")
+                print(repr(e))
                 print("=" * 60)
 
                 traceback.print_exc()
 
-                # Do NOT silently pretend classic is AI.
                 return jsonify({
                     "success": False,
                     "error": "LaMa processing failed.",
-                    "details": repr(lama_exception)
+                    "details": repr(e)
                 }), 500
 
-        # -------------------------------------------------
-        # Classic
-        # -------------------------------------------------
+
+        # ----------------------------------------------------
+        # CLASSIC
+        # ----------------------------------------------------
 
         elif method in [
             "classic",
             "opencv"
         ]:
 
-            result = classic_inpaint(
+            result = run_classic(
                 image,
                 mask
             )
 
             used_method = "classic"
 
+
         else:
 
             return jsonify({
                 "success": False,
-                "error": (
-                    "Unknown method. "
-                    "Use 'ai' or 'classic'."
-                )
+                "error": "Unknown method."
             }), 400
 
-        # -------------------------------------------------
-        # Make sure output has original dimensions
-        # -------------------------------------------------
 
-        if (
-            result.shape[1] != original_width
-            or result.shape[0] != original_height
-        ):
+        # ----------------------------------------------------
+        # KEEP ORIGINAL SIZE
+        # ----------------------------------------------------
+
+        if result.shape[:2] != image.shape[:2]:
 
             result = cv2.resize(
                 result,
-                (
-                    original_width,
-                    original_height
-                ),
+                (width, height),
                 interpolation=cv2.INTER_LANCZOS4
             )
 
-        # -------------------------------------------------
-        # Encode
-        # -------------------------------------------------
 
-        output_bytes = encode_image(
-            result,
-            ".png"
+        # ----------------------------------------------------
+        # ENCODE PNG
+        # ----------------------------------------------------
+
+        success, encoded = cv2.imencode(
+            ".png",
+            result
+        )
+
+        if not success:
+
+            raise RuntimeError(
+                "Could not encode result."
+            )
+
+        output = encoded.tobytes()
+
+
+        print(
+            "=" * 60
         )
 
         print(
-            "Processing completed:",
+            "SUCCESS"
+        )
+
+        print(
+            "Method:",
             used_method
         )
 
-        # -------------------------------------------------
-        # Return image
-        # -------------------------------------------------
+        print(
+            "Output:",
+            width,
+            "x",
+            height
+        )
+
+        print(
+            "=" * 60
+        )
+
+
+        # ----------------------------------------------------
+        # SEND IMAGE
+        # ----------------------------------------------------
 
         return send_file(
-            io.BytesIO(output_bytes),
+            io.BytesIO(output),
             mimetype="image/png",
             as_attachment=False,
             download_name="result.png"
         )
 
+
     except Exception as e:
 
         print("=" * 60)
-        print("PROCESS ERROR:")
+        print("SERVER ERROR")
         print(repr(e))
         print("=" * 60)
 
@@ -619,12 +603,12 @@ def process():
         }), 500
 
 
-# =========================================================
-# Error handlers
-# =========================================================
+# ============================================================
+# FILE TOO LARGE
+# ============================================================
 
 @app.errorhandler(413)
-def file_too_large(error):
+def too_large(error):
 
     return jsonify({
         "success": False,
@@ -632,18 +616,9 @@ def file_too_large(error):
     }), 413
 
 
-@app.errorhandler(500)
-def internal_error(error):
-
-    return jsonify({
-        "success": False,
-        "error": "Internal server error."
-    }), 500
-
-
-# =========================================================
-# Start
-# =========================================================
+# ============================================================
+# START
+# ============================================================
 
 if __name__ == "__main__":
 
@@ -656,8 +631,8 @@ if __name__ == "__main__":
 
     print("=" * 60)
     print("AI IMAGE ERASER")
-    print("Starting Flask server...")
-    print("Device: CPU")
+    print("Flask server starting...")
+    print("CPU MODE")
     print("Port:", port)
     print("=" * 60)
 
