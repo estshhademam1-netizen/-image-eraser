@@ -1,765 +1,492 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#111111">
-    <title>AI Image Eraser</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#e9d5f5">
+<title>إزالة الأجسام من الصورة</title>
+<style>
+:root{
+  --ink:#2d2342;
+  --muted:#7d7396;
+  --card:rgba(255,255,255,.72);
+  --card-line:rgba(255,255,255,.9);
+  --shadow:0 10px 30px rgba(110,70,160,.14);
+  --yellow:#fff4c2;
+  --mint:#d4f5e6;
+  --rose:#ffdbe6;
+  --lilac:#e7dcff;
+  --accent:#8b5cf6;
+  --accent2:#ec4899;
+  --danger:#e11d48;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  min-height:100vh;color:var(--ink);
+  font-family:"Segoe UI",Tahoma,Arial,sans-serif;
+  background:
+    radial-gradient(900px 500px at 10% -10%,#f7c8e6 0,transparent 60%),
+    radial-gradient(900px 500px at 100% 10%,#cdbbff 0,transparent 55%),
+    linear-gradient(180deg,#efe2fa,#fbeaf3);
+  background-attachment:fixed;
+}
+.app{max-width:1280px;margin:0 auto;padding:18px 16px 70px}
 
-    <style>
-        /* =====================================================
-            GLOBAL
-        ===================================================== */
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
+/* ---------- banner ---------- */
+.banner{text-align:center;margin-bottom:20px}
+.banner h1{
+  display:inline-block;margin:0;padding:12px 34px;border-radius:14px;
+  font-size:21px;font-weight:800;color:#5a2a00;
+  background:linear-gradient(135deg,#ffc58a,#ff9b6a);
+  box-shadow:0 8px 22px rgba(255,140,80,.35);
+}
+.banner p{margin:10px 0 0;color:var(--muted);font-size:13.5px}
 
-        html,
-        body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            min-height: 100%;
-        }
+/* ---------- 3 column layout (like the reference) ---------- */
+.layout{
+  direction:ltr;
+  display:grid;
+  grid-template-columns:280px minmax(0,1fr) minmax(0,1fr);
+  gap:18px;align-items:start;
+}
+.layout > *{direction:rtl}
 
-        body {
-            background: #111;
-            color: #fff;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-            overflow-x: hidden;
-        }
+.card{
+  background:var(--card);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border:1px solid var(--card-line);border-radius:22px;box-shadow:var(--shadow);padding:16px;
+}
 
-        /* =====================================================
-            HEADER
-        ===================================================== */
-        header {
-            text-align: center;
-            padding: 22px 15px 18px;
-            background: #151515;
-            border-bottom: 1px solid #292929;
-        }
+/* ---------- sidebar ---------- */
+.side{display:flex;flex-direction:column;gap:10px;position:sticky;top:14px}
+.side-title{
+  text-align:center;padding:13px 10px;border-radius:14px;background:#fffbe3;
+  font-weight:800;font-size:16px;border:1px solid #f3e9b3;
+}
+.side-sub{
+  text-align:center;font-size:12.5px;color:var(--muted);background:#f0eafc;
+  border-radius:10px;padding:6px;margin-top:-2px;
+}
+.btn{
+  width:100%;border:1px solid rgba(0,0,0,.05);border-radius:13px;padding:13px 12px;
+  font-family:inherit;font-size:14.5px;font-weight:700;color:var(--ink);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;
+  transition:transform .12s,box-shadow .15s,filter .15s;
+}
+.btn:hover{filter:brightness(.97);box-shadow:0 5px 14px rgba(90,60,140,.15)}
+.btn:active{transform:scale(.97)}
+.btn:disabled,.btn.disabled{opacity:.45;cursor:not-allowed;pointer-events:none}
+.b-yellow{background:var(--yellow)}
+.b-mint{background:var(--mint)}
+.b-rose{background:var(--rose)}
+.b-lilac{background:var(--lilac)}
+.b-main{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:0;
+  box-shadow:0 8px 22px rgba(139,92,246,.4);font-size:15.5px;padding:15px}
+.btn.on{outline:3px solid var(--accent);outline-offset:-1px;background:#c6f0dc}
 
-        header h1 {
-            margin: 0;
-            font-size: 25px;
-            font-weight: 800;
-            color: #fff;
-        }
+.tools3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tools3 .btn{flex-direction:column;gap:3px;padding:11px 4px;font-size:12.5px}
+.tools3 .btn i{font-style:normal;font-size:19px}
+.mini{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mini .btn{padding:10px 4px;font-size:12.5px}
 
-        header p {
-            margin: 8px 0 0;
-            font-size: 14px;
-            color: #aaa;
-        }
+.size{display:none;align-items:center;gap:10px;padding:2px 4px}
+.size label{font-size:12.5px;color:var(--muted);white-space:nowrap}
+.size input{flex:1;min-width:0;accent-color:var(--accent)}
+.size output{width:30px;text-align:center;font-size:12.5px}
 
-        /* =====================================================
-            MAIN CONTAINER
-        ===================================================== */
-        .container {
-            width: 100%;
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 15px;
-        }
+.tip{font-size:12.5px;line-height:1.7;color:#5f5580;background:#f6f1ff;border-radius:12px;padding:9px 11px;text-align:center}
+.hr{height:1px;background:rgba(120,90,170,.15);margin:2px 0}
 
-        /* =====================================================
-            UPLOAD
-        ===================================================== */
-        .upload-box {
-            width: 100%;
-            border: 2px dashed #555;
-            border-radius: 18px;
-            padding: 25px 15px;
-            background: #181818;
-            text-align: center;
-            margin-bottom: 15px;
-        }
+/* ---------- panels ---------- */
+.panel-head{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:12px}
+.chip-title{
+  width:100%;text-align:center;background:#fff;border-radius:11px;padding:10px;
+  font-weight:800;font-size:15.5px;box-shadow:0 2px 8px rgba(90,60,140,.08);
+}
+.chip-sub{
+  font-size:11.5px;color:var(--muted);background:#f3edfd;border-radius:8px;padding:3px 12px;
+}
+.stage{
+  position:relative;min-height:340px;border-radius:16px;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+  background-color:#f4eefb;
+  background-image:
+    linear-gradient(45deg,#ebe3f7 25%,transparent 25%),
+    linear-gradient(-45deg,#ebe3f7 25%,transparent 25%),
+    linear-gradient(45deg,transparent 75%,#ebe3f7 75%),
+    linear-gradient(-45deg,transparent 75%,#ebe3f7 75%);
+  background-size:20px 20px;background-position:0 0,0 10px,10px -10px,-10px 0;
+}
+.wrap{position:relative;line-height:0;max-width:100%;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;display:none}
+.wrap canvas{display:block}
+#imageCanvas{max-width:100%;max-height:68vh;width:auto;height:auto;pointer-events:none}
+#maskCanvas,#previewCanvas{position:absolute;left:0;top:0;width:100%;height:100%}
+#maskCanvas{touch-action:none;cursor:crosshair}
+#previewCanvas{pointer-events:none}
 
-        .upload-button {
-            display: inline-block;
-            padding: 15px 28px;
-            border-radius: 14px;
-            background: #fff;
-            color: #111;
-            font-size: 17px;
-            font-weight: 700;
-            cursor: pointer;
-            user-select: none;
-        }
+.empty{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+  text-align:center;color:var(--muted);padding:30px 16px;width:100%;height:100%;min-height:340px;
+}
+.empty .big{font-size:42px}
+.empty b{color:var(--ink);font-size:15px}
+.empty span{font-size:12.5px}
+label.empty{cursor:pointer;transition:background .15s}
+label.empty:hover,label.empty.over{background:rgba(139,92,246,.1)}
+#fileInput{display:none}
 
-        .upload-button:active {
-            transform: scale(.97);
-        }
+#resultImg{display:none;max-width:100%;max-height:68vh;width:auto;height:auto}
 
-        #imageInput {
-            display: none;
-        }
+#cursor{
+  position:fixed;display:none;border:2px solid #fff;border-radius:50%;pointer-events:none;
+  z-index:9999;transform:translate(-50%,-50%);box-shadow:0 0 0 1px #000,0 0 8px rgba(0,0,0,.4);
+}
 
-        #fileName {
-            margin: 12px 0 0;
-            color: #ddd;
-            font-size: 14px;
-            word-break: break-word;
-        }
+/* ---------- toast ---------- */
+#toast{
+  position:fixed;left:50%;bottom:20px;transform:translate(-50%,30px);opacity:0;pointer-events:none;
+  background:#2d2342;color:#fff;padding:12px 18px;border-radius:14px;font-size:14px;line-height:1.6;
+  max-width:92vw;text-align:center;z-index:10000;transition:.25s;box-shadow:0 10px 30px rgba(0,0,0,.3);
+}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+#toast.err{background:var(--danger)}
+.spin{
+  display:inline-block;width:15px;height:15px;border:3px solid rgba(255,255,255,.4);border-top-color:#fff;
+  border-radius:50%;animation:sp .8s linear infinite;vertical-align:middle;margin-inline-start:8px;
+}
+@keyframes sp{to{transform:rotate(360deg)}}
 
-        /* =====================================================
-            TOOLBAR
-        ===================================================== */
-        .toolbar {
-            width: 100%;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 8px;
-            padding: 12px;
-            background: #191919;
-            border-radius: 16px;
-            margin-bottom: 12px;
-        }
-
-        .tool-button {
-            border: 0;
-            border-radius: 11px;
-            padding: 12px 15px;
-            background: #292929;
-            color: #fff;
-            font-size: 14px;
-            cursor: pointer;
-            user-select: none;
-        }
-
-        .tool-button:active {
-            transform: scale(.96);
-        }
-
-        .tool-button.active {
-            background: #fff;
-            color: #111;
-            font-weight: 700;
-        }
-
-        .remove-button {
-            background: #e52d20;
-            color: #fff;
-            font-weight: 800;
-            padding-left: 20px;
-            padding-right: 20px;
-        }
-
-        .remove-button:active {
-            background: #b91f16;
-        }
-
-        .tool-button:disabled {
-            opacity: .4;
-            cursor: not-allowed;
-        }
-
-        /* =====================================================
-            BRUSH CONTROL
-        ===================================================== */
-        .controls {
-            background: #191919;
-            border-radius: 15px;
-            padding: 13px;
-            margin-bottom: 12px;
-        }
-
-        .control-row {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .control-label {
-            min-width: 80px;
-            font-size: 14px;
-            color: #ccc;
-        }
-
-        #brushSize {
-            flex: 1;
-            min-width: 0;
-            accent-color: #fff;
-        }
-
-        #brushSizeValue {
-            width: 45px;
-            text-align: center;
-            color: #fff;
-            font-size: 14px;
-        }
-
-        /* =====================================================
-            STATUS
-        ===================================================== */
-        #status {
-            display: none;
-            width: 100%;
-            padding: 13px;
-            margin-bottom: 12px;
-            border-radius: 12px;
-            background: #202020;
-            text-align: center;
-            font-size: 14px;
-            line-height: 1.6;
-        }
-
-        /* =====================================================
-            WORKSPACE
-        ===================================================== */
-        .workspace {
-            position: relative;
-            width: 100%;
-            min-height: 250px;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            padding: 8px;
-            overflow: auto;
-            border-radius: 18px;
-            background-color: #181818;
-            background-image:
-                linear-gradient(45deg, #202020 25%, transparent 25%),
-                linear-gradient(-45deg, #202020 25%, transparent 25%),
-                linear-gradient(45deg, transparent 75%, #202020 75%),
-                linear-gradient(-45deg, transparent 75%, #202020 75%);
-            background-size: 24px 24px;
-            background-position: 0 0, 0 12px, 12px -12px, -12px 0;
-            touch-action: none;
-            overscroll-behavior: contain;
-        }
-
-        /* =====================================================
-            CANVAS WRAPPER
-        ===================================================== */
-        .canvas-wrap {
-            position: relative;
-            display: inline-block;
-            line-height: 0;
-            max-width: 100%;
-            touch-action: none;
-            user-select: none;
-            -webkit-user-select: none;
-            -webkit-touch-callout: none;
-        }
-
-        /* =====================================================
-            IMAGE CANVAS
-        ===================================================== */
-        #imageCanvas {
-            position: relative;
-            display: block;
-            z-index: 1;
-            max-width: 100%;
-            height: auto;
-            border-radius: 10px;
-            user-select: none;
-            -webkit-user-select: none;
-            pointer-events: none;
-        }
-
-        /* =====================================================
-            MASK CANVAS
-        ===================================================== */
-        #maskCanvas {
-            position: absolute;
-            left: 0;
-            top: 0;
-            z-index: 10;
-            display: block;
-            max-width: 100%;
-            height: auto;
-            pointer-events: auto;
-            touch-action: none;
-            user-select: none;
-            -webkit-user-select: none;
-            -webkit-touch-callout: none;
-            cursor: crosshair;
-        }
-
-        /* =====================================================
-            BRUSH CURSOR
-        ===================================================== */
-        #brushCursor {
-            position: fixed;
-            display: none;
-            width: 50px;
-            height: 50px;
-            border: 2px solid #fff;
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 99999;
-            transform: translate(-50%, -50%);
-            box-shadow: 0 0 0 1px #000, 0 0 10px rgba(0,0,0,.8);
-        }
-
-        /* =====================================================
-            INSTRUCTIONS
-        ===================================================== */
-        .hint {
-            padding: 13px;
-            text-align: center;
-            color: #999;
-            font-size: 13px;
-            line-height: 1.8;
-        }
-
-        /* =====================================================
-            RESULT
-        ===================================================== */
-        .result-section {
-            display: none;
-            margin-top: 20px;
-            padding: 15px;
-            background: #191919;
-            border-radius: 16px;
-        }
-
-        .result-section h2 {
-            margin: 0 0 12px;
-            font-size: 19px;
-            text-align: center;
-        }
-
-        #resultImage {
-            display: block;
-            width: 100%;
-            height: auto;
-            border-radius: 12px;
-        }
-
-        .download-button {
-            display: block;
-            width: 100%;
-            margin-top: 12px;
-            padding: 14px;
-            border-radius: 12px;
-            background: #fff;
-            color: #111;
-            text-align: center;
-            text-decoration: none;
-            font-weight: 800;
-        }
-
-        /* =====================================================
-            LOADING
-        ===================================================== */
-        .loading {
-            display: inline-block;
-            width: 18px;
-            height: 18px;
-            border: 3px solid #777;
-            border-top-color: #fff;
-            border-radius: 50%;
-            animation: spin .8s linear infinite;
-            vertical-align: middle;
-            margin-left: 7px;
-        }
-
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        /* =====================================================
-            MOBILE
-        ===================================================== */
-        @media (max-width: 600px) {
-            header h1 { font-size: 22px; }
-            header p { font-size: 13px; }
-            .container { padding: 10px; }
-            .toolbar { padding: 10px; }
-            .tool-button { font-size: 13px; padding: 10px 12px; }
-            .workspace { padding: 5px; }
-        }
-    </style>
+/* ---------- responsive ---------- */
+@media(max-width:1000px){
+  .layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .side{grid-column:1 / -1;position:static;order:3}
+  .side .grid-btns{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+}
+@media(max-width:700px){
+  .layout{grid-template-columns:minmax(0,1fr)}
+  #p-orig{order:1}
+  .side{order:2}
+  #p-mod{order:3}
+  .banner h1{font-size:17px;padding:10px 18px}
+  .stage,.empty{min-height:260px}
+}
+</style>
 </head>
-
 <body>
+<div class="app">
 
-<header>
-    <h1>AI Image Eraser ✨</h1>
-    <p>حدد العنصر بالفرشاة ثم احذفه بالذكاء الاصطناعي</p>
-</header>
+  <div class="banner">
+    <h1>إزالة الأجسام غير المرغوبة من الصورة</h1>
+    <p>ارسمي دايرة حوالين أي شيء في الصورة وهيتشال والخلفية ترجع طبيعية</p>
+  </div>
 
-<div class="container">
+  <div class="layout">
 
-    <div class="upload-box">
-        <label for="imageInput" class="upload-button">
-            اختر الصورة 📷
+    <!-- ============ SIDEBAR ============ -->
+    <aside class="card side">
+      <div class="side-title">أدوات التحرير ✨</div>
+      <div class="side-sub">العمليات الأساسية</div>
+
+      <label class="btn b-yellow" for="fileInput">📷 اختيار صورة</label>
+
+      <div class="hr"></div>
+
+      <div class="tools3">
+        <button class="btn b-mint on" id="tLasso" type="button"><i>⭕</i>تحديد حر</button>
+        <button class="btn b-mint" id="tBrush" type="button"><i>🖌️</i>فرشاة</button>
+        <button class="btn b-mint" id="tErase" type="button"><i>🧽</i>ممحاة</button>
+      </div>
+
+      <div class="size" id="sizeRow">
+        <label for="brushSize">الحجم</label>
+        <input id="brushSize" type="range" min="5" max="200" value="50">
+        <output id="brushOut">50</output>
+      </div>
+
+      <div class="tip" id="tip"></div>
+
+      <div class="mini">
+        <button class="btn b-lilac" id="undoBtn" type="button" disabled>↩️ تراجع</button>
+        <button class="btn b-lilac" id="redoBtn" type="button" disabled>↪️ إعادة</button>
+        <button class="btn b-lilac" id="clearBtn" type="button">🗑️ مسح</button>
+      </div>
+
+      <div class="hr"></div>
+
+      <button class="btn b-main" id="removeBtn" type="button" disabled>✨ إزالة العنصر</button>
+      <button class="btn b-rose" id="resetBtn" type="button" disabled>🔄 إعادة ضبط</button>
+      <button class="btn b-mint" id="continueBtn" type="button" disabled>🔁 كمّلي على النتيجة</button>
+      <a class="btn b-yellow disabled" id="downloadBtn" download="result.png">⬇️ تحميل النتيجة</a>
+    </aside>
+
+    <!-- ============ ORIGINAL ============ -->
+    <section class="card" id="p-orig">
+      <div class="panel-head">
+        <div class="chip-title">الصورة الأصلية</div>
+        <div class="chip-sub">Original Image</div>
+      </div>
+      <div class="stage">
+        <label class="empty" id="drop" for="fileInput">
+          <div class="big">📷</div>
+          <b>دوسي هنا أو اسحبي صورة</b>
+          <span>JPG / PNG / WEBP — حتى 25 ميجا</span>
         </label>
-        <input id="imageInput" type="file" accept="image/*">
-        <div id="fileName">لم يتم اختيار صورة</div>
-    </div>
-
-    <div class="toolbar">
-        <button id="brushBtn" class="tool-button active" type="button">تحديد 🖌️</button>
-        <button id="eraseBtn" class="tool-button" type="button">مسح التحديد 🧽</button>
-        <button id="undoBtn" class="tool-button" type="button" disabled>تراجع ↩️</button>
-        <button id="redoBtn" class="tool-button" type="button" disabled>إعادة ↪️</button>
-        <button id="clearBtn" class="tool-button" type="button">مسح الكل 🗑️</button>
-        <button id="removeBtn" class="tool-button remove-button" type="button" disabled>إزالة العنصر ✨</button>
-    </div>
-
-    <div class="controls">
-        <div class="control-row">
-            <span class="control-label">حجم الفرشة</span>
-            <input id="brushSize" type="range" min="5" max="200" value="50">
-            <span id="brushSizeValue">50</span>
+        <div class="wrap" id="wrap">
+          <canvas id="imageCanvas"></canvas>
+          <canvas id="maskCanvas"></canvas>
+          <canvas id="previewCanvas"></canvas>
         </div>
-    </div>
+      </div>
+      <input id="fileInput" type="file" accept="image/*">
+    </section>
 
-    <div id="status"></div>
-
-    <div id="workspace" class="workspace">
-        <div id="canvasWrap" class="canvas-wrap">
-            <canvas id="imageCanvas"></canvas>
-            <canvas id="maskCanvas"></canvas>
+    <!-- ============ MODIFIED ============ -->
+    <section class="card" id="p-mod">
+      <div class="panel-head">
+        <div class="chip-title">الصورة بعد التعديل</div>
+        <div class="chip-sub">Modified Image</div>
+      </div>
+      <div class="stage">
+        <div class="empty" id="resEmpty">
+          <div class="big">🪄</div>
+          <b>النتيجة هتظهر هنا</b>
+          <span>حددي الكائن ثم دوسي "إزالة العنصر"</span>
         </div>
-    </div>
+        <img id="resultImg" alt="الصورة بعد التعديل">
+      </div>
+    </section>
 
-    <div class="hint">
-        🖌️ اسحبي بإصبعك فوق العنصر الذي تريدين حذفه
-        <br>الأبيض = المنطقة التي سيتم حذفها
-        <br>🧽 استخدمي "مسح التحديد" لتصحيح أي جزء بالخطأ
-    </div>
-
-    <div id="resultSection" class="result-section">
-        <h2>النتيجة ✨</h2>
-        <img id="resultImage" alt="AI Result">
-        <a id="downloadBtn" class="download-button" download="ai-removed-object.png">تحميل الصورة ⬇️</a>
-    </div>
-
+  </div>
 </div>
 
-<div id="brushCursor"></div>
+<div id="cursor"></div>
+<div id="toast"></div>
 
 <script>
-    const imageInput = document.getElementById("imageInput");
-    const fileName = document.getElementById("fileName");
-    const imageCanvas = document.getElementById("imageCanvas");
-    const maskCanvas = document.getElementById("maskCanvas");
-    const imageCtx = imageCanvas.getContext("2d");
-    const maskCtx = maskCanvas.getContext("2d");
-    const brushBtn = document.getElementById("brushBtn");
-    const eraseBtn = document.getElementById("eraseBtn");
-    const undoBtn = document.getElementById("undoBtn");
-    const redoBtn = document.getElementById("redoBtn");
-    const clearBtn = document.getElementById("clearBtn");
-    const removeBtn = document.getElementById("removeBtn");
-    const brushSize = document.getElementById("brushSize");
-    const brushSizeValue = document.getElementById("brushSizeValue");
-    const statusBox = document.getElementById("status");
-    const resultSection = document.getElementById("resultSection");
-    const resultImage = document.getElementById("resultImage");
-    const downloadBtn = document.getElementById("downloadBtn");
-    const brushCursor = document.getElementById("brushCursor");
+const $ = id => document.getElementById(id);
+const fileInput=$("fileInput"), drop=$("drop"), wrap=$("wrap");
+const imageCanvas=$("imageCanvas"), maskCanvas=$("maskCanvas"), previewCanvas=$("previewCanvas");
+const imageCtx=imageCanvas.getContext("2d"), maskCtx=maskCanvas.getContext("2d"), prevCtx=previewCanvas.getContext("2d");
+const tLasso=$("tLasso"), tBrush=$("tBrush"), tErase=$("tErase");
+const undoBtn=$("undoBtn"), redoBtn=$("redoBtn"), clearBtn=$("clearBtn");
+const removeBtn=$("removeBtn"), resetBtn=$("resetBtn"), continueBtn=$("continueBtn"), downloadBtn=$("downloadBtn");
+const brushSize=$("brushSize"), brushOut=$("brushOut"), sizeRow=$("sizeRow"), tip=$("tip"), cursor=$("cursor");
+const resultImg=$("resultImg"), resEmpty=$("resEmpty"), toast=$("toast");
 
-    let imageLoaded = false;
-    let drawing = false;
-    let tool = "brush";
-    let lastPoint = null;
-    let history = [];
-    let historyIndex = -1;
+const MASK_COLOR = "rgba(255,70,110,0.55)";   // display only; server reads the alpha channel
+let currentFile=null, baseFile=null, imageLoaded=false;
+let tool="lasso", drawing=false, lastPoint=null, lassoPts=[];
+let history=[], historyIndex=-1;
+let lastResultBlob=null, resultUrl=null, toastTimer=null;
 
-    imageInput.addEventListener("change", function () {
-        const file = this.files && this.files[0];
-        if (!file) return;
+/* ---------- toast ---------- */
+function showStatus(msg,isErr,sticky){
+  clearTimeout(toastTimer);
+  toast.innerHTML=msg; toast.className="show"+(isErr?" err":"");
+  if(!sticky) toastTimer=setTimeout(()=>toast.classList.remove("show"),isErr?5000:3200);
+}
+function hideStatus(){ toast.classList.remove("show"); }
 
-        fileName.textContent = file.name;
-        const url = URL.createObjectURL(file);
-        const img = new Image();
+/* ---------- result panel ---------- */
+function clearResult(){
+  if(resultUrl){ URL.revokeObjectURL(resultUrl); resultUrl=null; }
+  lastResultBlob=null;
+  resultImg.style.display="none"; resultImg.removeAttribute("src");
+  resEmpty.style.display="flex";
+  continueBtn.disabled=true;
+  downloadBtn.classList.add("disabled"); downloadBtn.removeAttribute("href");
+}
 
-        img.onload = function () {
-            imageCanvas.width = img.naturalWidth;
-            imageCanvas.height = img.naturalHeight;
-            maskCanvas.width = img.naturalWidth;
-            maskCanvas.height = img.naturalHeight;
+/* ---------- loading ---------- */
+function loadFile(file,isNew){
+  if(!file || !file.type.startsWith("image/")){ showStatus("اختاري ملف صورة صحيح.",true); return; }
+  currentFile=file; if(isNew) baseFile=file;
+  const url=URL.createObjectURL(file), img=new Image();
+  img.onload=()=>{
+    for(const c of [imageCanvas,maskCanvas,previewCanvas]){ c.width=img.naturalWidth; c.height=img.naturalHeight; }
+    imageCtx.clearRect(0,0,imageCanvas.width,imageCanvas.height);
+    imageCtx.drawImage(img,0,0);
+    maskCtx.clearRect(0,0,maskCanvas.width,maskCanvas.height);
+    imageLoaded=true; history=[]; historyIndex=-1; saveHistory();
+    drop.style.display="none"; wrap.style.display="block";
+    removeBtn.disabled=false; resetBtn.disabled=false;
+    clearResult();
+    URL.revokeObjectURL(url);
+    showStatus("الصورة جاهزة ✅ ارسمي حوالين الكائن",false);
+  };
+  img.onerror=()=>{ showStatus("تعذر فتح الصورة.",true); URL.revokeObjectURL(url); };
+  img.src=url;
+}
+fileInput.addEventListener("change",e=>{ loadFile(e.target.files[0],true); fileInput.value=""; });
+["dragenter","dragover"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add("over")}));
+["dragleave","drop"].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove("over")}));
+drop.addEventListener("drop",e=>loadFile(e.dataTransfer.files[0],true));
 
-            imageCtx.clearRect(0, 0, imageCanvas.width, imageCanvas.height);
-            imageCtx.drawImage(img, 0, 0);
+/* ---------- tools ---------- */
+function setTool(t){
+  tool=t;
+  tLasso.classList.toggle("on",t==="lasso");
+  tBrush.classList.toggle("on",t==="brush");
+  tErase.classList.toggle("on",t==="erase");
+  sizeRow.style.display=t==="lasso"?"none":"flex";
+  cursor.style.display="none";
+  tip.textContent={
+    lasso:"⭕ ارسمي دايرة أو أي شكل حوالين الكائن، وأول ما ترفعي إصبعك كل اللي جواها يتحدد",
+    brush:"🖌️ لوّني فوق الكائن — مناسبة للأشياء الرفيعة زي الأسلاك",
+    erase:"🧽 امسحي أي جزء اتحدد بالغلط"
+  }[t];
+}
+tLasso.onclick=()=>setTool("lasso");
+tBrush.onclick=()=>setTool("brush");
+tErase.onclick=()=>setTool("erase");
+brushSize.addEventListener("input",()=>{ brushOut.textContent=brushSize.value; });
 
-            maskCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+/* ---------- geometry ---------- */
+function scaleFactor(){ return maskCanvas.width/maskCanvas.getBoundingClientRect().width; }
+function getPoint(e){
+  const r=maskCanvas.getBoundingClientRect(), s=maskCanvas.width/r.width;
+  return {x:(e.clientX-r.left)*s, y:(e.clientY-r.top)*s};
+}
 
-            imageLoaded = true;
-            history = [];
-            historyIndex = -1;
-            saveHistory();
+/* ---------- drawing ---------- */
+function brushStroke(p){
+  const size=Number(brushSize.value)*scaleFactor();
+  maskCtx.save();
+  maskCtx.lineCap="round"; maskCtx.lineJoin="round"; maskCtx.lineWidth=size;
+  if(tool==="erase"){ maskCtx.globalCompositeOperation="destination-out"; maskCtx.strokeStyle=maskCtx.fillStyle="#000"; }
+  else{ maskCtx.strokeStyle=maskCtx.fillStyle=MASK_COLOR; }
+  if(lastPoint){ maskCtx.beginPath(); maskCtx.moveTo(lastPoint.x,lastPoint.y); maskCtx.lineTo(p.x,p.y); maskCtx.stroke(); }
+  else{ maskCtx.beginPath(); maskCtx.arc(p.x,p.y,size/2,0,Math.PI*2); maskCtx.fill(); }
+  maskCtx.restore(); lastPoint=p;
+}
+function drawLassoPreview(){
+  prevCtx.clearRect(0,0,previewCanvas.width,previewCanvas.height);
+  if(lassoPts.length<2) return;
+  const s=scaleFactor();
+  prevCtx.save(); prevCtx.lineCap="round"; prevCtx.lineJoin="round";
+  prevCtx.beginPath(); prevCtx.moveTo(lassoPts[0].x,lassoPts[0].y);
+  for(const p of lassoPts) prevCtx.lineTo(p.x,p.y);
+  prevCtx.lineWidth=5*s; prevCtx.strokeStyle="rgba(0,0,0,.55)"; prevCtx.stroke();
+  prevCtx.lineWidth=3*s; prevCtx.strokeStyle="#fff"; prevCtx.setLineDash([10*s,7*s]); prevCtx.stroke();
+  const last=lassoPts[lassoPts.length-1];
+  prevCtx.setLineDash([4*s,6*s]); prevCtx.lineWidth=2*s; prevCtx.strokeStyle="rgba(255,255,255,.7)";
+  prevCtx.beginPath(); prevCtx.moveTo(last.x,last.y); prevCtx.lineTo(lassoPts[0].x,lassoPts[0].y); prevCtx.stroke();
+  prevCtx.restore();
+}
+function commitLasso(){
+  prevCtx.clearRect(0,0,previewCanvas.width,previewCanvas.height);
+  if(lassoPts.length<3){ lassoPts=[]; return false; }
+  const s=scaleFactor();
+  maskCtx.save();
+  maskCtx.globalCompositeOperation="source-over";
+  maskCtx.fillStyle=maskCtx.strokeStyle=MASK_COLOR;
+  maskCtx.lineJoin="round"; maskCtx.lineCap="round";
+  maskCtx.beginPath(); maskCtx.moveTo(lassoPts[0].x,lassoPts[0].y);
+  for(const p of lassoPts) maskCtx.lineTo(p.x,p.y);
+  maskCtx.closePath(); maskCtx.fill();
+  maskCtx.lineWidth=6*s; maskCtx.stroke();
+  maskCtx.restore(); lassoPts=[]; return true;
+}
 
-            removeBtn.disabled = false;
-            resultSection.style.display = "none";
-            showStatus("الصورة جاهزة 🖌️ ارسمي فوق العنصر الذي تريدين حذفه", false);
-            URL.revokeObjectURL(url);
-        };
+maskCanvas.addEventListener("pointerdown",e=>{
+  if(!imageLoaded) return;
+  e.preventDefault(); drawing=true;
+  const p=getPoint(e);
+  if(tool==="lasso"){ lassoPts=[p]; drawLassoPreview(); } else { lastPoint=null; brushStroke(p); }
+  try{ maskCanvas.setPointerCapture(e.pointerId); }catch(_){}
+});
+maskCanvas.addEventListener("pointermove",e=>{
+  moveCursor(e);
+  if(!drawing) return;
+  e.preventDefault();
+  const p=getPoint(e);
+  if(tool==="lasso"){
+    const l=lassoPts[lassoPts.length-1];
+    if(Math.hypot(p.x-l.x,p.y-l.y)>2*scaleFactor()){ lassoPts.push(p); drawLassoPreview(); }
+  } else brushStroke(p);
+});
+function stopDraw(e){
+  if(!drawing) return;
+  drawing=false; lastPoint=null;
+  try{ maskCanvas.releasePointerCapture(e.pointerId); }catch(_){}
+  if(tool==="lasso"){
+    if(commitLasso()){ saveHistory(); showStatus("✅ تم تحديد المنطقة — دوسي \"إزالة العنصر\"",false); }
+  } else saveHistory();
+}
+maskCanvas.addEventListener("pointerup",stopDraw);
+maskCanvas.addEventListener("pointercancel",stopDraw);
+maskCanvas.addEventListener("pointerleave",()=>{cursor.style.display="none"});
+maskCanvas.addEventListener("touchstart",e=>e.preventDefault(),{passive:false});
+maskCanvas.addEventListener("touchmove",e=>e.preventDefault(),{passive:false});
 
-        img.onerror = function () {
-            showStatus("تعذر فتح الصورة.", true);
-            URL.revokeObjectURL(url);
-        };
+function moveCursor(e){
+  if(tool==="lasso"||e.pointerType==="touch"){ cursor.style.display="none"; return; }
+  const px=Number(brushSize.value)/scaleFactor();
+  cursor.style.width=px+"px"; cursor.style.height=px+"px";
+  cursor.style.left=e.clientX+"px"; cursor.style.top=e.clientY+"px"; cursor.style.display="block";
+}
 
-        img.src = url;
-    });
+/* ---------- history ---------- */
+function saveHistory(){
+  if(!imageLoaded) return;
+  history=history.slice(0,historyIndex+1);
+  history.push(maskCanvas.toDataURL("image/png"));
+  if(history.length>30) history.shift();
+  historyIndex=history.length-1; updateHistoryButtons();
+}
+function restoreHistory(i){
+  const img=new Image();
+  img.onload=()=>{
+    maskCtx.save(); maskCtx.globalCompositeOperation="source-over";
+    maskCtx.clearRect(0,0,maskCanvas.width,maskCanvas.height);
+    maskCtx.drawImage(img,0,0,maskCanvas.width,maskCanvas.height);
+    maskCtx.restore(); updateHistoryButtons();
+  };
+  img.src=history[i];
+}
+function updateHistoryButtons(){ undoBtn.disabled=historyIndex<=0; redoBtn.disabled=historyIndex>=history.length-1; }
+undoBtn.onclick=()=>{ if(historyIndex>0){ historyIndex--; restoreHistory(historyIndex);} };
+redoBtn.onclick=()=>{ if(historyIndex<history.length-1){ historyIndex++; restoreHistory(historyIndex);} };
+clearBtn.onclick=()=>{ if(!imageLoaded) return; maskCtx.clearRect(0,0,maskCanvas.width,maskCanvas.height); saveHistory(); hideStatus(); };
+resetBtn.onclick=()=>{ if(baseFile) loadFile(baseFile,false); };
 
-    brushBtn.addEventListener("click", function () {
-        tool = "brush";
-        brushBtn.classList.add("active");
-        eraseBtn.classList.remove("active");
-        showStatus("🖌️ وضع التحديد: ارسمي فوق العنصر", false);
-    });
+/* ---------- remove ---------- */
+removeBtn.addEventListener("click",async()=>{
+  if(!imageLoaded||!currentFile) return;
+  const d=maskCtx.getImageData(0,0,maskCanvas.width,maskCanvas.height).data;
+  let has=false;
+  for(let i=3;i<d.length;i+=4){ if(d[i]>10){has=true;break;} }
+  if(!has){ showStatus("⚠️ حددي الكائن الأول (ارسمي دايرة حواليه)",true); return; }
 
-    eraseBtn.addEventListener("click", function () {
-        tool = "erase";
-        eraseBtn.classList.add("active");
-        brushBtn.classList.remove("active");
-        showStatus("🧽 وضع المسح: امسحي الجزء المحدد بالخطأ", false);
-    });
+  removeBtn.disabled=true;
+  showStatus('جاري إزالة العنصر بالذكاء الاصطناعي... ممكن ياخد شوية <span class="spin"></span>',false,true);
+  try{
+    const maskBlob=await new Promise(r=>maskCanvas.toBlob(r,"image/png"));
+    if(!maskBlob) throw new Error("تعذر إنشاء القناع.");
+    const fd=new FormData();
+    fd.append("image",currentFile); fd.append("mask",maskBlob,"mask.png"); fd.append("method","ai");
+    const res=await fetch("/process",{method:"POST",body:fd});
+    if(!res.ok){ const j=await res.json().catch(()=>({})); throw new Error(j.error||"حصل خطأ أثناء المعالجة."); }
+    lastResultBlob=await res.blob();
+    if(resultUrl) URL.revokeObjectURL(resultUrl);
+    resultUrl=URL.createObjectURL(lastResultBlob);
+    resultImg.src=resultUrl; resultImg.style.display="block"; resEmpty.style.display="none";
+    downloadBtn.href=resultUrl; downloadBtn.classList.remove("disabled");
+    continueBtn.disabled=false;
+    $("p-mod").scrollIntoView({behavior:"smooth",block:"nearest"});
+    showStatus("✨ تمت الإزالة بنجاح!",false);
+  }catch(err){
+    console.error(err);
+    showStatus("❌ "+(err.message||"خطأ غير معروف"),true);
+  }finally{ removeBtn.disabled=false; }
+});
 
-    brushSize.addEventListener("input", function () {
-        brushSizeValue.textContent = this.value;
-        updateBrushCursorSize();
-    });
+continueBtn.addEventListener("click",()=>{
+  if(lastResultBlob) loadFile(new File([lastResultBlob],"result.png",{type:"image/png"}),false);
+});
 
-    function getCanvasPoint(event) {
-        const rect = maskCanvas.getBoundingClientRect();
-        const scaleX = maskCanvas.width / rect.width;
-        const scaleY = maskCanvas.height / rect.height;
-
-        return {
-            x: (event.clientX - rect.left) * scaleX,
-            y: (event.clientY - rect.top) * scaleY
-        };
-    }
-
-    function drawAt(point) {
-        const size = Number(brushSize.value);
-        maskCtx.save();
-        maskCtx.lineCap = "round";
-        maskCtx.lineJoin = "round";
-
-        if (tool === "brush") {
-            maskCtx.globalCompositeOperation = "source-over";
-            maskCtx.strokeStyle = "rgba(255,255,255,0.72)";
-            maskCtx.fillStyle = "rgba(255,255,255,0.72)";
-        } else {
-            maskCtx.globalCompositeOperation = "destination-out";
-            maskCtx.strokeStyle = "rgba(0,0,0,1)";
-            maskCtx.fillStyle = "rgba(0,0,0,1)";
-        }
-
-        maskCtx.lineWidth = size;
-
-        if (lastPoint) {
-            maskCtx.beginPath();
-            maskCtx.moveTo(lastPoint.x, lastPoint.y);
-            maskCtx.lineTo(point.x, point.y);
-            maskCtx.stroke();
-        } else {
-            maskCtx.beginPath();
-            maskCtx.arc(point.x, point.y, size / 2, 0, Math.PI * 2);
-            maskCtx.fill();
-        }
-
-        maskCtx.restore();
-        lastPoint = point;
-    }
-
-    maskCanvas.addEventListener("pointerdown", function (event) {
-        if (!imageLoaded) return;
-        event.preventDefault();
-        drawing = true;
-        lastPoint = getCanvasPoint(event);
-        drawAt(lastPoint);
-
-        try {
-            maskCanvas.setPointerCapture(event.pointerId);
-        } catch (e) {}
-    }, { passive: false });
-
-    maskCanvas.addEventListener("pointermove", function (event) {
-        updateBrushCursor(event);
-        if (!drawing) return;
-        event.preventDefault();
-        const point = getCanvasPoint(event);
-        drawAt(point);
-    }, { passive: false });
-
-    function stopDrawing(event) {
-        if (!drawing) return;
-        drawing = false;
-        lastPoint = null;
-
-        try {
-            maskCanvas.releasePointerCapture(event.pointerId);
-        } catch (e) {}
-
-        saveHistory();
-    }
-
-    maskCanvas.addEventListener("pointerup", stopDrawing);
-    maskCanvas.addEventListener("pointercancel", stopDrawing);
-
-    maskCanvas.addEventListener("touchstart", function (event) {
-        event.preventDefault();
-    }, { passive: false });
-
-    maskCanvas.addEventListener("touchmove", function (event) {
-        if (drawing) event.preventDefault();
-    }, { passive: false });
-
-    maskCanvas.addEventListener("touchend", function (event) {
-        if (drawing) event.preventDefault();
-    }, { passive: false });
-
-    function updateBrushCursorSize() {
-        const size = Number(brushSize.value);
-        brushCursor.style.width = size + "px";
-        brushCursor.style.height = size + "px";
-    }
-
-    function updateBrushCursor(event) {
-        updateBrushCursorSize();
-        brushCursor.style.left = event.clientX + "px";
-        brushCursor.style.top = event.clientY + "px";
-
-        if (event.pointerType !== "touch") {
-            brushCursor.style.display = "block";
-        }
-    }
-
-    maskCanvas.addEventListener("pointerleave", function () {
-        brushCursor.style.display = "none";
-    });
-
-    function saveHistory() {
-        if (!imageLoaded) return;
-        const data = maskCanvas.toDataURL("image/png");
-        history = history.slice(0, historyIndex + 1);
-        history.push(data);
-        historyIndex = history.length - 1;
-
-        if (history.length > 30) {
-            history.shift();
-            historyIndex--;
-        }
-        updateHistoryButtons();
-    }
-
-    function restoreHistory(index) {
-        if (index < 0 || index >= history.length) return;
-        const img = new Image();
-
-        img.onload = function () {
-            maskCtx.save();
-            maskCtx.globalCompositeOperation = "source-over";
-            maskCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
-            maskCtx.drawImage(img, 0, 0, maskCanvas.width, maskCanvas.height);
-            maskCtx.restore();
-            updateHistoryButtons();
-        };
-
-        img.src = history[index];
-    }
-
-    undoBtn.addEventListener("click", function () {
-        if (historyIndex > 0) {
-            historyIndex--;
-            restoreHistory(historyIndex);
-        }
-    });
-
-    redoBtn.addEventListener("click", function () {
-        if (historyIndex < history.length - 1) {
-            historyIndex++;
-            restoreHistory(historyIndex);
-        }
-    });
-
-    function updateHistoryButtons() {
-        undoBtn.disabled = historyIndex <= 0;
-        redoBtn.disabled = historyIndex >= history.length - 1;
-    }
-
-    clearBtn.addEventListener("click", function () {
-        if (!imageLoaded) return;
-
-        maskCtx.save();
-        maskCtx.globalCompositeOperation = "source-over";
-        maskCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
-        maskCtx.restore();
-
-        saveHistory();
-        showStatus("🧹 تم مسح التحديد. ارسمي من جديد", false);
-    });
-
-    function showStatus(message, isError) {
-        statusBox.style.display = "block";
-        statusBox.style.color = isError ? "#ff6b6b" : "#fff";
-        statusBox.innerHTML = message;
-    }
-
-    removeBtn.addEventListener("click", async function () {
-        if (!imageLoaded) return;
-
-        const maskData = maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height).data;
-        let hasMask = false;
-        for (let i = 3; i < maskData.length; i += 4) {
-            if (maskData[i] > 10) {
-                hasMask = true;
-                break;
-            }
-        }
-
-        if (!hasMask) {
-            showStatus("⚠️ الرجاء تحديد العنصر بالفرشاة أولاً", true);
-            return;
-        }
-
-        removeBtn.disabled = true;
-        showStatus('جاري إزالة العنصر بالذكاء الاصطناعي... يرجى الانتظار <span class="loading"></span>', false);
-
-        try {
-            const imageFile = imageInput.files[0];
-            if (!imageFile) throw new Error("لم يتم العثور على ملف الصورة.");
-
-            const maskBlob = await new Promise((resolve) => maskCanvas.toBlob(resolve, "image/png"));
-            if (!maskBlob) throw new Error("تعذر إنشاء قناع التحديد.");
-
-            const formData = new FormData();
-            formData.append("image", imageFile);
-            formData.append("mask", maskBlob, "mask.png");
-            formData.append("method", "ai");
-
-            const response = await fetch("/process", {
-                method: "POST",
-                body: formData
-            });
-
-            if (!response.ok) {
-                const errJson = await response.json().catch(() => ({}));
-                throw new Error(errJson.error || "حدث خطأ أثناء معالجة الصورة في الخادم.");
-            }
-
-            const resultBlob = await response.blob();
-            const resultUrl = URL.createObjectURL(resultBlob);
-
-            resultImage.src = resultUrl;
-            downloadBtn.href = resultUrl;
-            resultSection.style.display = "block";
-
-            resultSection.scrollIntoView({ behavior: "smooth" });
-            showStatus("✨ تمت إزالة العنصر بنجاح!", false);
-
-        } catch (err) {
-            console.error(err);
-            showStatus("❌ " + (err.message || "حدث خطأ غير معروف."), true);
-        } finally {
-            removeBtn.disabled = false;
-        }
-    });
+setTool("lasso");
 </script>
-
 </body>
 </html>
