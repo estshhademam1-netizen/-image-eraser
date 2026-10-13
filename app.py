@@ -31,28 +31,30 @@ def get_lama():
         import torch
         from simple_lama_inpainting import SimpleLama
         import os
+        import gc
 
-        print("Loading LaMa on CPU...")
+        print("Loading LaMa on CPU (Memory Optimized)...")
         
-        # العثور على مسار ملف النموذج المحمل مسبقاً
+        # تفريغ الذاكرة المتاحة قبل التحميل
+        gc.collect()
+        
         hub_dir = torch.hub.get_dir()
         model_path = os.path.join(hub_dir, "checkpoints", "big-lama.pt")
         
         if os.path.exists(model_path):
-            # تحميل النموذج يويفاً مع تحديد الخريطة على الـ CPU لمنع خطأ CUDA
-            loaded_model = torch.jit.load(model_path, map_location=torch.device("cpu"))
-            loaded_model.eval()
+            # تحميل النموذج مع تعطيل التتبع (no_grad) لتوفير RAM
+            with torch.no_grad():
+                loaded_model = torch.jit.load(model_path, map_location=torch.device("cpu"))
+                loaded_model.eval()
             
-            # إنشاء كائن SimpleLama وحقن النموذج المعدل داخله
             lama = SimpleLama.__new__(SimpleLama)
             lama.model = loaded_model
             lama.device = torch.device("cpu")
         else:
-            # إذا لم يتم العثور عليه، دعه يحاول التحميل العادي
             lama = SimpleLama(device=torch.device("cpu"))
             
         lama_error = None
-        print("LaMa loaded successfully.")
+        print("LaMa loaded successfully with low memory footprint.")
         return lama
     except Exception as e:
         lama = None
@@ -60,8 +62,6 @@ def get_lama():
         import traceback
         traceback.print_exc()
         return None
-
-
 # ------------------------------------------------------------
 # Input reading
 # ------------------------------------------------------------
@@ -214,6 +214,8 @@ def process():
                 result = run_lama(image, mask)
             except Exception as e:
                 traceback.print_exc()
+                import gc
+                gc.collect()
                 return jsonify({"success": False, "error": "LaMa processing failed.", "details": repr(e)}), 500
         elif method in ("classic", "opencv"):
             result = run_classic(image, mask)
@@ -224,13 +226,18 @@ def process():
         if not ok:
             raise RuntimeError("Could not encode result.")
 
+        # --- تفريغ الذاكرة المؤقتة فور الانتهاء لمنع تجاوز حد 512MB على Render ---
+        import gc
+        gc.collect()
+
         return send_file(io.BytesIO(encoded.tobytes()), mimetype="image/png",
                          as_attachment=False, download_name="result.png")
 
     except Exception as e:
+        import gc
+        gc.collect()
         traceback.print_exc()
         return jsonify({"success": False, "error": repr(e)}), 500
-
 
 @app.errorhandler(413)
 def too_large(error):
