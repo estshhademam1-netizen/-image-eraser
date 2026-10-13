@@ -23,7 +23,6 @@ lama_error = None
 
 # ------------------------------------------------------------
 # LaMa loader
-# ------------------------------------------------------------
 def get_lama():
     global lama, lama_error
     if lama is not None:
@@ -31,15 +30,34 @@ def get_lama():
     try:
         import torch
         from simple_lama_inpainting import SimpleLama
+        import os
 
         print("Loading LaMa on CPU...")
-        lama = SimpleLama(device=torch.device("cpu"))
+        
+        # العثور على مسار ملف النموذج المحمل مسبقاً
+        hub_dir = torch.hub.get_dir()
+        model_path = os.path.join(hub_dir, "checkpoints", "big-lama.pt")
+        
+        if os.path.exists(model_path):
+            # تحميل النموذج يويفاً مع تحديد الخريطة على الـ CPU لمنع خطأ CUDA
+            loaded_model = torch.jit.load(model_path, map_location=torch.device("cpu"))
+            loaded_model.eval()
+            
+            # إنشاء كائن SimpleLama وحقن النموذج المعدل داخله
+            lama = SimpleLama.__new__(SimpleLama)
+            lama.model = loaded_model
+            lama.device = torch.device("cpu")
+        else:
+            # إذا لم يتم العثور عليه، دعه يحاول التحميل العادي
+            lama = SimpleLama(device=torch.device("cpu"))
+            
         lama_error = None
-        print("LaMa loaded.")
+        print("LaMa loaded successfully.")
         return lama
     except Exception as e:
         lama = None
         lama_error = repr(e)
+        import traceback
         traceback.print_exc()
         return None
 
