@@ -2,28 +2,15 @@
 <html lang="ar" dir="rtl">
 
 <head>
-
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-    >
-
-    <meta
-        name="theme-color"
-        content="#111111"
-    >
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#111111">
     <title>AI Image Eraser</title>
 
-
     <style>
-
         /* =====================================================
-           GLOBAL
+            GLOBAL
         ===================================================== */
-
         * {
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
@@ -40,103 +27,65 @@
         body {
             background: #111;
             color: #fff;
-            font-family:
-                -apple-system,
-                BlinkMacSystemFont,
-                "Segoe UI",
-                Arial,
-                sans-serif;
-
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
             overflow-x: hidden;
         }
 
-
         /* =====================================================
-           HEADER
+            HEADER
         ===================================================== */
-
         header {
             text-align: center;
             padding: 22px 15px 18px;
-
             background: #151515;
-
-            border-bottom:
-                1px solid #292929;
+            border-bottom: 1px solid #292929;
         }
 
         header h1 {
             margin: 0;
-
             font-size: 25px;
             font-weight: 800;
-
             color: #fff;
         }
 
         header p {
             margin: 8px 0 0;
-
             font-size: 14px;
             color: #aaa;
         }
 
-
         /* =====================================================
-           MAIN CONTAINER
+            MAIN CONTAINER
         ===================================================== */
-
         .container {
             width: 100%;
             max-width: 1100px;
-
             margin: 0 auto;
-
-            padding:
-                15px;
+            padding: 15px;
         }
 
-
         /* =====================================================
-           UPLOAD
+            UPLOAD
         ===================================================== */
-
         .upload-box {
-
             width: 100%;
-
-            border:
-                2px dashed #555;
-
+            border: 2px dashed #555;
             border-radius: 18px;
-
             padding: 25px 15px;
-
             background: #181818;
-
             text-align: center;
-
             margin-bottom: 15px;
         }
 
         .upload-button {
-
             display: inline-block;
-
-            padding:
-                15px 28px;
-
+            padding: 15px 28px;
             border-radius: 14px;
-
             background: #fff;
-
             color: #111;
-
             font-size: 17px;
             font-weight: 700;
-
             cursor: pointer;
-
             user-select: none;
         }
 
@@ -149,60 +98,35 @@
         }
 
         #fileName {
-
-            margin:
-                12px 0 0;
-
+            margin: 12px 0 0;
             color: #ddd;
-
             font-size: 14px;
-
             word-break: break-word;
         }
 
-
         /* =====================================================
-           TOOLBAR
+            TOOLBAR
         ===================================================== */
-
         .toolbar {
-
             width: 100%;
-
             display: flex;
-
             flex-wrap: wrap;
-
             justify-content: center;
-
             gap: 8px;
-
             padding: 12px;
-
             background: #191919;
-
             border-radius: 16px;
-
             margin-bottom: 12px;
         }
 
         .tool-button {
-
             border: 0;
-
             border-radius: 11px;
-
-            padding:
-                12px 15px;
-
+            padding: 12px 15px;
             background: #292929;
-
             color: #fff;
-
             font-size: 14px;
-
             cursor: pointer;
-
             user-select: none;
         }
 
@@ -211,22 +135,15 @@
         }
 
         .tool-button.active {
-
             background: #fff;
-
             color: #111;
-
             font-weight: 700;
         }
 
         .remove-button {
-
             background: #e52d20;
-
             color: #fff;
-
             font-weight: 800;
-
             padding-left: 20px;
             padding-right: 20px;
         }
@@ -236,2222 +153,613 @@
         }
 
         .tool-button:disabled {
-
             opacity: .4;
-
             cursor: not-allowed;
         }
 
-
         /* =====================================================
-           BRUSH CONTROL
+            BRUSH CONTROL
         ===================================================== */
-
         .controls {
-
             background: #191919;
-
             border-radius: 15px;
-
             padding: 13px;
-
             margin-bottom: 12px;
         }
 
         .control-row {
-
             display: flex;
-
             align-items: center;
-
             gap: 12px;
         }
 
         .control-label {
-
             min-width: 80px;
-
             font-size: 14px;
-
             color: #ccc;
         }
 
         #brushSize {
-
             flex: 1;
-
             min-width: 0;
-
             accent-color: #fff;
         }
 
         #brushSizeValue {
-
             width: 45px;
-
             text-align: center;
-
             color: #fff;
-
             font-size: 14px;
         }
 
-
         /* =====================================================
-           STATUS
+            STATUS
         ===================================================== */
-
         #status {
-
             display: none;
-
             width: 100%;
-
             padding: 13px;
-
             margin-bottom: 12px;
-
             border-radius: 12px;
-
             background: #202020;
-
             text-align: center;
-
             font-size: 14px;
-
             line-height: 1.6;
         }
 
-
         /* =====================================================
-           WORKSPACE
+            WORKSPACE
         ===================================================== */
-
         .workspace {
-
             position: relative;
-
             width: 100%;
-
             min-height: 250px;
-
             display: flex;
-
             justify-content: center;
-
             align-items: flex-start;
-
             padding: 8px;
-
             overflow: auto;
-
             border-radius: 18px;
-
             background-color: #181818;
-
-            /*
-                Checkerboard background
-            */
-
             background-image:
-                linear-gradient(
-                    45deg,
-                    #202020 25%,
-                    transparent 25%
-                ),
-                linear-gradient(
-                    -45deg,
-                    #202020 25%,
-                    transparent 25%
-                ),
-                linear-gradient(
-                    45deg,
-                    transparent 75%,
-                    #202020 75%
-                ),
-                linear-gradient(
-                    -45deg,
-                    transparent 75%,
-                    #202020 75%
-                );
-
+                linear-gradient(45deg, #202020 25%, transparent 25%),
+                linear-gradient(-45deg, #202020 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, #202020 75%),
+                linear-gradient(-45deg, transparent 75%, #202020 75%);
             background-size: 24px 24px;
-
-            background-position:
-                0 0,
-                0 12px,
-                12px -12px,
-                -12px 0;
-
-            /*
-                VERY IMPORTANT FOR MOBILE DRAWING
-            */
-
+            background-position: 0 0, 0 12px, 12px -12px, -12px 0;
             touch-action: none;
-
             overscroll-behavior: contain;
         }
 
-
         /* =====================================================
-           CANVAS WRAPPER
+            CANVAS WRAPPER
         ===================================================== */
-
         .canvas-wrap {
-
             position: relative;
-
             display: inline-block;
-
             line-height: 0;
-
             max-width: 100%;
-
             touch-action: none;
-
             user-select: none;
-
             -webkit-user-select: none;
-
             -webkit-touch-callout: none;
         }
 
-
         /* =====================================================
-           IMAGE CANVAS
+            IMAGE CANVAS
         ===================================================== */
-
         #imageCanvas {
-
             position: relative;
-
             display: block;
-
             z-index: 1;
-
             max-width: 100%;
-
             height: auto;
-
             border-radius: 10px;
-
             user-select: none;
-
             -webkit-user-select: none;
-
             pointer-events: none;
         }
 
-
         /* =====================================================
-           MASK CANVAS
+            MASK CANVAS
         ===================================================== */
-
         #maskCanvas {
-
             position: absolute;
-
             left: 0;
             top: 0;
-
             z-index: 10;
-
             display: block;
-
             max-width: 100%;
-
             height: auto;
-
-            /*
-                THIS IS THE IMPORTANT FIX
-            */
-
             pointer-events: auto;
-
             touch-action: none;
-
             user-select: none;
-
             -webkit-user-select: none;
-
             -webkit-touch-callout: none;
-
             cursor: crosshair;
         }
 
-
         /* =====================================================
-           BRUSH CURSOR
+            BRUSH CURSOR
         ===================================================== */
-
         #brushCursor {
-
             position: fixed;
-
             display: none;
-
             width: 50px;
             height: 50px;
-
-            border:
-                2px solid #fff;
-
+            border: 2px solid #fff;
             border-radius: 50%;
-
             pointer-events: none;
-
             z-index: 99999;
-
-            transform:
-                translate(-50%, -50%);
-
-            box-shadow:
-                0 0 0 1px #000,
-                0 0 10px rgba(0,0,0,.8);
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 0 1px #000, 0 0 10px rgba(0,0,0,.8);
         }
 
-
         /* =====================================================
-           INSTRUCTIONS
+            INSTRUCTIONS
         ===================================================== */
-
         .hint {
-
             padding: 13px;
-
             text-align: center;
-
             color: #999;
-
             font-size: 13px;
-
             line-height: 1.8;
         }
 
-
         /* =====================================================
-           RESULT
+            RESULT
         ===================================================== */
-
         .result-section {
-
             display: none;
-
             margin-top: 20px;
-
             padding: 15px;
-
             background: #191919;
-
             border-radius: 16px;
         }
 
         .result-section h2 {
-
-            margin:
-                0 0 12px;
-
+            margin: 0 0 12px;
             font-size: 19px;
-
             text-align: center;
         }
 
         #resultImage {
-
             display: block;
-
             width: 100%;
-
             height: auto;
-
             border-radius: 12px;
         }
 
         .download-button {
-
             display: block;
-
             width: 100%;
-
             margin-top: 12px;
-
             padding: 14px;
-
             border-radius: 12px;
-
             background: #fff;
-
             color: #111;
-
             text-align: center;
-
             text-decoration: none;
-
             font-weight: 800;
         }
 
-
         /* =====================================================
-           LOADING
+            LOADING
         ===================================================== */
-
         .loading {
-
             display: inline-block;
-
             width: 18px;
             height: 18px;
-
-            border:
-                3px solid #777;
-
-            border-top-color:
-                #fff;
-
+            border: 3px solid #777;
+            border-top-color: #fff;
             border-radius: 50%;
-
-            animation:
-                spin .8s linear infinite;
-
+            animation: spin .8s linear infinite;
             vertical-align: middle;
-
             margin-left: 7px;
         }
 
         @keyframes spin {
-
-            from {
-                transform: rotate(0deg);
-            }
-
-            to {
-                transform: rotate(360deg);
-            }
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
-
 
         /* =====================================================
-           MOBILE
+            MOBILE
         ===================================================== */
-
         @media (max-width: 600px) {
-
-            header h1 {
-                font-size: 22px;
-            }
-
-            header p {
-                font-size: 13px;
-            }
-
-            .container {
-                padding: 10px;
-            }
-
-            .toolbar {
-                padding: 10px;
-            }
-
-            .tool-button {
-                font-size: 13px;
-                padding: 10px 12px;
-            }
-
-            .workspace {
-                padding: 5px;
-            }
+            header h1 { font-size: 22px; }
+            header p { font-size: 13px; }
+            .container { padding: 10px; }
+            .toolbar { padding: 10px; }
+            .tool-button { font-size: 13px; padding: 10px 12px; }
+            .workspace { padding: 5px; }
         }
-
     </style>
-
 </head>
-
 
 <body>
 
-
-<!-- =========================================================
-     HEADER
-========================================================= -->
-
 <header>
-
-    <h1>
-        AI Image Eraser ✨
-    </h1>
-
-    <p>
-        حدد العنصر بالفرشاة ثم احذفه بالذكاء الاصطناعي
-    </p>
-
+    <h1>AI Image Eraser ✨</h1>
+    <p>حدد العنصر بالفرشاة ثم احذفه بالذكاء الاصطناعي</p>
 </header>
-
 
 <div class="container">
 
-
-    <!-- =====================================================
-         UPLOAD
-    ====================================================== -->
-
     <div class="upload-box">
-
-        <label
-            for="imageInput"
-            class="upload-button"
-        >
+        <label for="imageInput" class="upload-button">
             اختر الصورة 📷
         </label>
-
-        <input
-            id="imageInput"
-            type="file"
-            accept="image/*"
-        >
-
-        <div id="fileName">
-            لم يتم اختيار صورة
-        </div>
-
+        <input id="imageInput" type="file" accept="image/*">
+        <div id="fileName">لم يتم اختيار صورة</div>
     </div>
-
-
-    <!-- =====================================================
-         TOOLS
-    ====================================================== -->
 
     <div class="toolbar">
-
-
-        <button
-            id="brushBtn"
-            class="tool-button active"
-            type="button"
-        >
-            تحديد 🖌️
-        </button>
-
-
-        <button
-            id="eraseBtn"
-            class="tool-button"
-            type="button"
-        >
-            مسح التحديد 🧽
-        </button>
-
-
-        <button
-            id="undoBtn"
-            class="tool-button"
-            type="button"
-        >
-            تراجع ↩️
-        </button>
-
-
-        <button
-            id="redoBtn"
-            class="tool-button"
-            type="button"
-        >
-            إعادة ↪️
-        </button>
-
-
-        <button
-            id="clearBtn"
-            class="tool-button"
-            type="button"
-        >
-            مسح الكل 🗑️
-        </button>
-
-
-        <button
-            id="removeBtn"
-            class="tool-button remove-button"
-            type="button"
-            disabled
-        >
-            إزالة العنصر ✨
-        </button>
-
-
+        <button id="brushBtn" class="tool-button active" type="button">تحديد 🖌️</button>
+        <button id="eraseBtn" class="tool-button" type="button">مسح التحديد 🧽</button>
+        <button id="undoBtn" class="tool-button" type="button" disabled>تراجع ↩️</button>
+        <button id="redoBtn" class="tool-button" type="button" disabled>إعادة ↪️</button>
+        <button id="clearBtn" class="tool-button" type="button">مسح الكل 🗑️</button>
+        <button id="removeBtn" class="tool-button remove-button" type="button" disabled>إزالة العنصر ✨</button>
     </div>
-
-
-    <!-- =====================================================
-         BRUSH SIZE
-    ====================================================== -->
 
     <div class="controls">
-
         <div class="control-row">
-
-            <span class="control-label">
-                حجم الفرشة
-            </span>
-
-
-            <input
-                id="brushSize"
-                type="range"
-                min="5"
-                max="200"
-                value="50"
-            >
-
-
-            <span id="brushSizeValue">
-                50
-            </span>
-
+            <span class="control-label">حجم الفرشة</span>
+            <input id="brushSize" type="range" min="5" max="200" value="50">
+            <span id="brushSizeValue">50</span>
         </div>
-
     </div>
-
-
-    <!-- =====================================================
-         STATUS
-    ====================================================== -->
 
     <div id="status"></div>
 
-
-    <!-- =====================================================
-         WORKSPACE
-    ====================================================== -->
-
-    <div
-        id="workspace"
-        class="workspace"
-    >
-
-        <div
-            id="canvasWrap"
-            class="canvas-wrap"
-        >
-
-            <canvas
-                id="imageCanvas"
-            ></canvas>
-
-
-            <canvas
-                id="maskCanvas"
-            ></canvas>
-
+    <div id="workspace" class="workspace">
+        <div id="canvasWrap" class="canvas-wrap">
+            <canvas id="imageCanvas"></canvas>
+            <canvas id="maskCanvas"></canvas>
         </div>
-
     </div>
-
-
-    <!-- =====================================================
-         HINT
-    ====================================================== -->
 
     <div class="hint">
-
         🖌️ اسحبي بإصبعك فوق العنصر الذي تريدين حذفه
-
-        <br>
-
-        الأبيض = المنطقة التي سيتم حذفها
-
-        <br>
-
-        🧽 استخدمي "مسح التحديد" لتصحيح أي جزء بالخطأ
-
+        <br>الأبيض = المنطقة التي سيتم حذفها
+        <br>🧽 استخدمي "مسح التحديد" لتصحيح أي جزء بالخطأ
     </div>
 
-
-    <!-- =====================================================
-         RESULT
-    ====================================================== -->
-
-    <div
-        id="resultSection"
-        class="result-section"
-    >
-
-        <h2>
-            النتيجة ✨
-        </h2>
-
-
-        <img
-            id="resultImage"
-            alt="AI Result"
-        >
-
-
-        <a
-            id="downloadBtn"
-            class="download-button"
-            download="ai-removed-object.png"
-        >
-            تحميل الصورة ⬇️
-        </a>
-
+    <div id="resultSection" class="result-section">
+        <h2>النتيجة ✨</h2>
+        <img id="resultImage" alt="AI Result">
+        <a id="downloadBtn" class="download-button" download="ai-removed-object.png">تحميل الصورة ⬇️</a>
     </div>
-
 
 </div>
 
-
-<!-- =========================================================
-     BRUSH CURSOR
-========================================================= -->
-
 <div id="brushCursor"></div>
 
-
-
 <script>
-
-    // =========================================================
-    // ELEMENTS
-    // =========================================================
-
-    const imageInput =
-        document.getElementById(
-            "imageInput"
-        );
-
-
-    const fileName =
-        document.getElementById(
-            "fileName"
-        );
-
-
-    const imageCanvas =
-        document.getElementById(
-            "imageCanvas"
-        );
-
-
-    const maskCanvas =
-        document.getElementById(
-            "maskCanvas"
-        );
-
-
-    const imageCtx =
-        imageCanvas.getContext(
-            "2d"
-        );
-
-
-    const maskCtx =
-        maskCanvas.getContext(
-            "2d"
-        );
-
-
-    const brushBtn =
-        document.getElementById(
-            "brushBtn"
-        );
-
-
-    const eraseBtn =
-        document.getElementById(
-            "eraseBtn"
-        );
-
-
-    const undoBtn =
-        document.getElementById(
-            "undoBtn"
-        );
-
-
-    const redoBtn =
-        document.getElementById(
-            "redoBtn"
-        );
-
-
-    const clearBtn =
-        document.getElementById(
-            "clearBtn"
-        );
-
-
-    const removeBtn =
-        document.getElementById(
-            "removeBtn"
-        );
-
-
-    const brushSize =
-        document.getElementById(
-            "brushSize"
-        );
-
-
-    const brushSizeValue =
-        document.getElementById(
-            "brushSizeValue"
-        );
-
-
-    const statusBox =
-        document.getElementById(
-            "status"
-        );
-
-
-    const resultSection =
-        document.getElementById(
-            "resultSection"
-        );
-
-
-    const resultImage =
-        document.getElementById(
-            "resultImage"
-        );
-
-
-    const downloadBtn =
-        document.getElementById(
-            "downloadBtn"
-        );
-
-
-    const brushCursor =
-        document.getElementById(
-            "brushCursor"
-        );
-
-
-    // =========================================================
-    // STATE
-    // =========================================================
+    const imageInput = document.getElementById("imageInput");
+    const fileName = document.getElementById("fileName");
+    const imageCanvas = document.getElementById("imageCanvas");
+    const maskCanvas = document.getElementById("maskCanvas");
+    const imageCtx = imageCanvas.getContext("2d");
+    const maskCtx = maskCanvas.getContext("2d");
+    const brushBtn = document.getElementById("brushBtn");
+    const eraseBtn = document.getElementById("eraseBtn");
+    const undoBtn = document.getElementById("undoBtn");
+    const redoBtn = document.getElementById("redoBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const removeBtn = document.getElementById("removeBtn");
+    const brushSize = document.getElementById("brushSize");
+    const brushSizeValue = document.getElementById("brushSizeValue");
+    const statusBox = document.getElementById("status");
+    const resultSection = document.getElementById("resultSection");
+    const resultImage = document.getElementById("resultImage");
+    const downloadBtn = document.getElementById("downloadBtn");
+    const brushCursor = document.getElementById("brushCursor");
 
     let imageLoaded = false;
-
     let drawing = false;
-
     let tool = "brush";
-
     let lastPoint = null;
-
-
-    /*
-        History:
-
-        history[0] = empty mask
-        history[1] = first drawing
-        history[2] = second drawing
-        etc.
-    */
-
     let history = [];
-
     let historyIndex = -1;
 
-
-    // =========================================================
-    // IMAGE UPLOAD
-    // =========================================================
-
-    imageInput.addEventListener(
-        "change",
-        function () {
-
-            const file =
-                this.files &&
-                this.files[0];
-
-
-            if (!file) {
-                return;
-            }
-
-
-            fileName.textContent =
-                file.name;
-
-
-            const url =
-                URL.createObjectURL(
-                    file
-                );
-
-
-            const img =
-                new Image();
-
-
-            img.onload =
-                function () {
-
-                    /*
-                        ORIGINAL IMAGE SIZE
-                    */
-
-                    imageCanvas.width =
-                        img.naturalWidth;
-
-                    imageCanvas.height =
-                        img.naturalHeight;
-
-
-                    /*
-                        MASK SAME SIZE
-                    */
-
-                    maskCanvas.width =
-                        img.naturalWidth;
-
-                    maskCanvas.height =
-                        img.naturalHeight;
-
-
-                    /*
-                        DRAW IMAGE
-                    */
-
-                    imageCtx.clearRect(
-                        0,
-                        0,
-                        imageCanvas.width,
-                        imageCanvas.height
-                    );
-
-
-                    imageCtx.drawImage(
-                        img,
-                        0,
-                        0
-                    );
-
-
-                    /*
-                        CLEAR MASK
-                    */
-
-                    maskCtx.clearRect(
-                        0,
-                        0,
-                        maskCanvas.width,
-                        maskCanvas.height
-                    );
-
-
-                    /*
-                        STATE
-                    */
-
-                    imageLoaded = true;
-
-
-                    history = [];
-
-                    historyIndex = -1;
-
-
-                    /*
-                        Save initial empty mask
-                    */
-
-                    saveHistory();
-
-
-                    /*
-                        Enable remove
-                    */
-
-                    removeBtn.disabled =
-                        false;
-
-
-                    resultSection.style.display =
-                        "none";
-
-
-                    showStatus(
-                        "الصورة جاهزة 🖌️ ارسمي فوق العنصر الذي تريدين حذفه",
-                        false
-                    );
-
-
-                    URL.revokeObjectURL(
-                        url
-                    );
-                };
-
-
-            img.onerror =
-                function () {
-
-                    showStatus(
-                        "تعذر فتح الصورة.",
-                        true
-                    );
-
-                    URL.revokeObjectURL(
-                        url
-                    );
-                };
-
-
-            img.src =
-                url;
-
-        }
-    );
-
-
-    // =========================================================
-    // TOOL: BRUSH
-    // =========================================================
-
-    brushBtn.addEventListener(
-        "click",
-        function () {
-
-            tool = "brush";
-
-            brushBtn.classList.add(
-                "active"
-            );
-
-            eraseBtn.classList.remove(
-                "active"
-            );
-
-            showStatus(
-                "🖌️ وضع التحديد: ارسمي فوق العنصر",
-                false
-            );
-        }
-    );
-
-
-    // =========================================================
-    // TOOL: ERASE
-    // =========================================================
-
-    eraseBtn.addEventListener(
-        "click",
-        function () {
-
-            tool = "erase";
-
-            eraseBtn.classList.add(
-                "active"
-            );
-
-            brushBtn.classList.remove(
-                "active"
-            );
-
-            showStatus(
-                "🧽 وضع المسح: امسحي الجزء المحدد بالخطأ",
-                false
-            );
-        }
-    );
-
-
-    // =========================================================
-    // BRUSH SIZE
-    // =========================================================
-
-    brushSize.addEventListener(
-        "input",
-        function () {
-
-            brushSizeValue.textContent =
-                this.value;
-
-            updateBrushCursorSize();
-        }
-    );
-
-
-    // =========================================================
-    // GET CANVAS POINT
-    // =========================================================
-
-    function getCanvasPoint(
-        event
-    ) {
-
-        const rect =
-            maskCanvas.getBoundingClientRect();
-
-
-        const scaleX =
-            maskCanvas.width /
-            rect.width;
-
-
-        const scaleY =
-            maskCanvas.height /
-            rect.height;
-
+    imageInput.addEventListener("change", function () {
+        const file = this.files && this.files[0];
+        if (!file) return;
+
+        fileName.textContent = file.name;
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+
+        img.onload = function () {
+            imageCanvas.width = img.naturalWidth;
+            imageCanvas.height = img.naturalHeight;
+            maskCanvas.width = img.naturalWidth;
+            maskCanvas.height = img.naturalHeight;
+
+            imageCtx.clearRect(0, 0, imageCanvas.width, imageCanvas.height);
+            imageCtx.drawImage(img, 0, 0);
+
+            maskCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+
+            imageLoaded = true;
+            history = [];
+            historyIndex = -1;
+            saveHistory();
+
+            removeBtn.disabled = false;
+            resultSection.style.display = "none";
+            showStatus("الصورة جاهزة 🖌️ ارسمي فوق العنصر الذي تريدين حذفه", false);
+            URL.revokeObjectURL(url);
+        };
+
+        img.onerror = function () {
+            showStatus("تعذر فتح الصورة.", true);
+            URL.revokeObjectURL(url);
+        };
+
+        img.src = url;
+    });
+
+    brushBtn.addEventListener("click", function () {
+        tool = "brush";
+        brushBtn.classList.add("active");
+        eraseBtn.classList.remove("active");
+        showStatus("🖌️ وضع التحديد: ارسمي فوق العنصر", false);
+    });
+
+    eraseBtn.addEventListener("click", function () {
+        tool = "erase";
+        eraseBtn.classList.add("active");
+        brushBtn.classList.remove("active");
+        showStatus("🧽 وضع المسح: امسحي الجزء المحدد بالخطأ", false);
+    });
+
+    brushSize.addEventListener("input", function () {
+        brushSizeValue.textContent = this.value;
+        updateBrushCursorSize();
+    });
+
+    function getCanvasPoint(event) {
+        const rect = maskCanvas.getBoundingClientRect();
+        const scaleX = maskCanvas.width / rect.width;
+        const scaleY = maskCanvas.height / rect.height;
 
         return {
-
-            x:
-                (event.clientX -
-                 rect.left)
-                * scaleX,
-
-            y:
-                (event.clientY -
-                 rect.top)
-                * scaleY
+            x: (event.clientX - rect.left) * scaleX,
+            y: (event.clientY - rect.top) * scaleY
         };
     }
 
-
-    // =========================================================
-    // DRAW
-    // =========================================================
-
-    function drawAt(
-        point
-    ) {
-
-        const size =
-            Number(
-                brushSize.value
-            );
-
-
+    function drawAt(point) {
+        const size = Number(brushSize.value);
         maskCtx.save();
-
-
-        maskCtx.lineCap =
-            "round";
-
-
-        maskCtx.lineJoin =
-            "round";
-
-
-        /*
-            BRUSH
-        */
+        maskCtx.lineCap = "round";
+        maskCtx.lineJoin = "round";
 
         if (tool === "brush") {
-
-            maskCtx.globalCompositeOperation =
-                "source-over";
-
-
-            /*
-                White semi-transparent
-                overlay.
-            */
-
-            maskCtx.strokeStyle =
-                "rgba(255,255,255,0.72)";
-
-
-            maskCtx.fillStyle =
-                "rgba(255,255,255,0.72)";
-
+            maskCtx.globalCompositeOperation = "source-over";
+            maskCtx.strokeStyle = "rgba(255,255,255,0.72)";
+            maskCtx.fillStyle = "rgba(255,255,255,0.72)";
+        } else {
+            maskCtx.globalCompositeOperation = "destination-out";
+            maskCtx.strokeStyle = "rgba(0,0,0,1)";
+            maskCtx.fillStyle = "rgba(0,0,0,1)";
         }
 
-
-        /*
-            ERASER
-        */
-
-        else {
-
-            maskCtx.globalCompositeOperation =
-                "destination-out";
-
-
-            maskCtx.strokeStyle =
-                "rgba(0,0,0,1)";
-
-
-            maskCtx.fillStyle =
-                "rgba(0,0,0,1)";
-        }
-
-
-        maskCtx.lineWidth =
-            size;
-
-
-        /*
-            CONTINUOUS LINE
-        */
+        maskCtx.lineWidth = size;
 
         if (lastPoint) {
-
             maskCtx.beginPath();
-
-
-            maskCtx.moveTo(
-                lastPoint.x,
-                lastPoint.y
-            );
-
-
-            maskCtx.lineTo(
-                point.x,
-                point.y
-            );
-
-
+            maskCtx.moveTo(lastPoint.x, lastPoint.y);
+            maskCtx.lineTo(point.x, point.y);
             maskCtx.stroke();
-
-        }
-
-
-        /*
-            FIRST POINT
-        */
-
-        else {
-
+        } else {
             maskCtx.beginPath();
-
-
-            maskCtx.arc(
-                point.x,
-                point.y,
-                size / 2,
-                0,
-                Math.PI * 2
-            );
-
-
+            maskCtx.arc(point.x, point.y, size / 2, 0, Math.PI * 2);
             maskCtx.fill();
         }
 
-
         maskCtx.restore();
-
-
-        lastPoint =
-            point;
+        lastPoint = point;
     }
 
-
-    // =========================================================
-    // POINTER DOWN
-    // =========================================================
-
-    maskCanvas.addEventListener(
-        "pointerdown",
-        function (event) {
-
-            if (!imageLoaded) {
-                return;
-            }
-
-
-            event.preventDefault();
-
-
-            drawing = true;
-
-
-            lastPoint =
-                getCanvasPoint(
-                    event
-                );
-
-
-            drawAt(
-                lastPoint
-            );
-
-
-            try {
-
-                maskCanvas.setPointerCapture(
-                    event.pointerId
-                );
-
-            } catch (e) {}
-
-        },
-        {
-            passive: false
-        }
-    );
-
-
-    // =========================================================
-    // POINTER MOVE
-    // =========================================================
-
-    maskCanvas.addEventListener(
-        "pointermove",
-        function (event) {
-
-            /*
-                Update brush cursor
-            */
-
-            updateBrushCursor(
-                event
-            );
-
-
-            if (!drawing) {
-                return;
-            }
-
-
-            event.preventDefault();
-
-
-            const point =
-                getCanvasPoint(
-                    event
-                );
-
-
-            drawAt(
-                point
-            );
-
-        },
-        {
-            passive: false
-        }
-    );
-
-
-    // =========================================================
-    // POINTER UP
-    // =========================================================
-
-    function stopDrawing(
-        event
-    ) {
-
-        if (!drawing) {
-            return;
-        }
-
-
-        drawing = false;
-
-
-        lastPoint = null;
-
+    maskCanvas.addEventListener("pointerdown", function (event) {
+        if (!imageLoaded) return;
+        event.preventDefault();
+        drawing = true;
+        lastPoint = getCanvasPoint(event);
+        drawAt(lastPoint);
 
         try {
+            maskCanvas.setPointerCapture(event.pointerId);
+        } catch (e) {}
+    }, { passive: false });
 
-            maskCanvas.releasePointerCapture(
-                event.pointerId
-            );
+    maskCanvas.addEventListener("pointermove", function (event) {
+        updateBrushCursor(event);
+        if (!drawing) return;
+        event.preventDefault();
+        const point = getCanvasPoint(event);
+        drawAt(point);
+    }, { passive: false });
 
+    function stopDrawing(event) {
+        if (!drawing) return;
+        drawing = false;
+        lastPoint = null;
+
+        try {
+            maskCanvas.releasePointerCapture(event.pointerId);
         } catch (e) {}
 
-
-        /*
-            IMPORTANT:
-
-            Save one history state
-            after every stroke.
-        */
-
         saveHistory();
-
     }
 
+    maskCanvas.addEventListener("pointerup", stopDrawing);
+    maskCanvas.addEventListener("pointercancel", stopDrawing);
 
-    maskCanvas.addEventListener(
-        "pointerup",
-        stopDrawing
-    );
+    maskCanvas.addEventListener("touchstart", function (event) {
+        event.preventDefault();
+    }, { passive: false });
 
+    maskCanvas.addEventListener("touchmove", function (event) {
+        if (drawing) event.preventDefault();
+    }, { passive: false });
 
-    maskCanvas.addEventListener(
-        "pointercancel",
-        stopDrawing
-    );
-
-
-    // =========================================================
-    // PREVENT TOUCH SCROLL WHILE DRAWING
-    // =========================================================
-
-    maskCanvas.addEventListener(
-        "touchstart",
-        function (event) {
-
-            event.preventDefault();
-
-        },
-        {
-            passive: false
-        }
-    );
-
-
-    maskCanvas.addEventListener(
-        "touchmove",
-        function (event) {
-
-            if (drawing) {
-                event.preventDefault();
-            }
-
-        },
-        {
-            passive: false
-        }
-    );
-
-
-    maskCanvas.addEventListener(
-        "touchend",
-        function (event) {
-
-            if (drawing) {
-                event.preventDefault();
-            }
-
-        },
-        {
-            passive: false
-        }
-    );
-
-
-    // =========================================================
-    // BRUSH CURSOR
-    // =========================================================
+    maskCanvas.addEventListener("touchend", function (event) {
+        if (drawing) event.preventDefault();
+    }, { passive: false });
 
     function updateBrushCursorSize() {
-
-        const size =
-            Number(
-                brushSize.value
-            );
-
-
-        brushCursor.style.width =
-            size + "px";
-
-
-        brushCursor.style.height =
-            size + "px";
+        const size = Number(brushSize.value);
+        brushCursor.style.width = size + "px";
+        brushCursor.style.height = size + "px";
     }
 
-
-    function updateBrushCursor(
-        event
-    ) {
-
+    function updateBrushCursor(event) {
         updateBrushCursorSize();
+        brushCursor.style.left = event.clientX + "px";
+        brushCursor.style.top = event.clientY + "px";
 
-
-        brushCursor.style.left =
-            event.clientX + "px";
-
-
-        brushCursor.style.top =
-            event.clientY + "px";
-
-
-        /*
-            Don't show fake cursor
-            on touch screens.
-        */
-
-        if (
-            event.pointerType !==
-            "touch"
-        ) {
-
-            brushCursor.style.display =
-                "block";
+        if (event.pointerType !== "touch") {
+            brushCursor.style.display = "block";
         }
     }
 
-
-    maskCanvas.addEventListener(
-        "pointerleave",
-        function () {
-
-            brushCursor.style.display =
-                "none";
-        }
-    );
-
-
-    // =========================================================
-    // HISTORY - SAVE
-    // =========================================================
+    maskCanvas.addEventListener("pointerleave", function () {
+        brushCursor.style.display = "none";
+    });
 
     function saveHistory() {
+        if (!imageLoaded) return;
+        const data = maskCanvas.toDataURL("image/png");
+        history = history.slice(0, historyIndex + 1);
+        history.push(data);
+        historyIndex = history.length - 1;
 
-        if (!imageLoaded) {
-            return;
-        }
-
-
-        const data =
-            maskCanvas.toDataURL(
-                "image/png"
-            );
-
-
-        /*
-            If we undo and then
-            draw something new,
-            delete future states.
-        */
-
-        history =
-            history.slice(
-                0,
-                historyIndex + 1
-            );
-
-
-        history.push(
-            data
-        );
-
-
-        historyIndex =
-            history.length - 1;
-
-
-        /*
-            Keep last 30 states.
-        */
-
-        if (
-            history.length > 30
-        ) {
-
+        if (history.length > 30) {
             history.shift();
-
             historyIndex--;
         }
-
-
         updateHistoryButtons();
     }
 
+    function restoreHistory(index) {
+        if (index < 0 || index >= history.length) return;
+        const img = new Image();
 
-    // =========================================================
-    // HISTORY - RESTORE
-    // =========================================================
+        img.onload = function () {
+            maskCtx.save();
+            maskCtx.globalCompositeOperation = "source-over";
+            maskCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+            maskCtx.drawImage(img, 0, 0, maskCanvas.width, maskCanvas.height);
+            maskCtx.restore();
+            updateHistoryButtons();
+        };
 
-    function restoreHistory(
-        index
-    ) {
-
-        if (
-            index < 0 ||
-            index >= history.length
-        ) {
-            return;
-        }
-
-
-        const img =
-            new Image();
-
-
-        img.onload =
-            function () {
-
-                maskCtx.save();
-
-
-                maskCtx.globalCompositeOperation =
-                    "source-over";
-
-
-                maskCtx.clearRect(
-                    0,
-                    0,
-                    maskCanvas.width,
-                    maskCanvas.height
-                );
-
-
-                maskCtx.drawImage(
-                    img,
-                    0,
-                    0,
-                    maskCanvas.width,
-                    maskCanvas.height
-                );
-
-
-                maskCtx.restore();
-
-
-                updateHistoryButtons();
-            };
-
-
-        img.src =
-            history[index];
+        img.src = history[index];
     }
 
-
-    // =========================================================
-    // UNDO
-    // =========================================================
-
-    undoBtn.addEventListener(
-        "click",
-        function () {
-
-            if (
-                historyIndex <= 0
-            ) {
-
-                showStatus(
-                    "لا يوجد شيء للتراجع عنه.",
-                    false
-                );
-
-                return;
-            }
-
-
+    undoBtn.addEventListener("click", function () {
+        if (historyIndex > 0) {
             historyIndex--;
-
-
-            restoreHistory(
-                historyIndex
-            );
-
-
-            showStatus(
-                "↩️ تم التراجع",
-                false
-            );
+            restoreHistory(historyIndex);
         }
-    );
+    });
 
-
-    // =========================================================
-    // REDO
-    // =========================================================
-
-    redoBtn.addEventListener(
-        "click",
-        function () {
-
-            if (
-                historyIndex >=
-                history.length - 1
-            ) {
-
-                showStatus(
-                    "لا يوجد شيء لإعادته.",
-                    false
-                );
-
-                return;
-            }
-
-
+    redoBtn.addEventListener("click", function () {
+        if (historyIndex < history.length - 1) {
             historyIndex++;
-
-
-            restoreHistory(
-                historyIndex
-            );
-
-
-            showStatus(
-                "↪️ تم الإعادة",
-                false
-            );
+            restoreHistory(historyIndex);
         }
-    );
-
-
-    // =========================================================
-    // HISTORY BUTTON STATES
-    // =========================================================
+    });
 
     function updateHistoryButtons() {
-
-        undoBtn.disabled =
-            historyIndex <= 0;
-
-
-        redoBtn.disabled =
-            historyIndex >=
-            history.length - 1;
+        undoBtn.disabled = historyIndex <= 0;
+        redoBtn.disabled = historyIndex >= history.length - 1;
     }
 
+    clearBtn.addEventListener("click", function () {
+        if (!imageLoaded) return;
 
-    // =========================================================
-    // CLEAR MASK
-    // =========================================================
+        maskCtx.save();
+        maskCtx.globalCompositeOperation = "source-over";
+        maskCtx.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+        maskCtx.restore();
 
-    clearBtn.addEventListener(
-        "click",
-        function () {
+        saveHistory();
+        showStatus("🧹 تم مسح التحديد. ارسمي من جديد", false);
+    });
 
-            if (!imageLoaded) {
-                return;
-            }
+    function showStatus(message, isError) {
+        statusBox.style.display = "block";
+        statusBox.style.color = isError ? "#ff6b6b" : "#fff";
+        statusBox.innerHTML = message;
+    }
 
+    removeBtn.addEventListener("click", async function () {
+        if (!imageLoaded) return;
 
-            maskCtx.save();
-
-
-            maskCtx.globalCompositeOperation =
-                "source-over";
-
-
-            maskCtx.clearRect(
-                0,
-                0,
-                maskCanvas.width,
-                maskCanvas.height
-            );
-
-
-            maskCtx.restore();
-
-
-            saveHistory();
-
-
-            showStatus(
-                "🗑️ تم مسح التحديد بالكامل",
-                false
-            );
-        }
-    );
-
-
-    // =========================================================
-    // CHECK MASK
-    // =========================================================
-
-    function maskHasPixels() {
-
-        const data =
-            maskCtx.getImageData(
-                0,
-                0,
-                maskCanvas.width,
-                maskCanvas.height
-            ).data;
-
-
-        /*
-            Because mask has alpha,
-            check alpha channel.
-        */
-
-        for (
-            let i = 3;
-            i < data.length;
-            i += 4
-        ) {
-
-            if (
-                data[i] > 10
-            ) {
-
-                return true;
+        const maskData = maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height).data;
+        let hasMask = false;
+        for (let i = 3; i < maskData.length; i += 4) {
+            if (maskData[i] > 10) {
+                hasMask = true;
+                break;
             }
         }
 
-
-        return false;
-    }
-
-
-    // =========================================================
-    // REMOVE OBJECT
-    // =========================================================
-
-    removeBtn.addEventListener(
-        "click",
-        removeObject
-    );
-
-
-    async function removeObject() {
-
-        if (!imageLoaded) {
-
-            showStatus(
-                "اختاري صورة أولاً.",
-                true
-            );
-
+        if (!hasMask) {
+            showStatus("⚠️ الرجاء تحديد العنصر بالفرشاة أولاً", true);
             return;
         }
 
-
-        if (!maskHasPixels()) {
-
-            showStatus(
-                "🖌️ حددي العنصر الذي تريدين حذفه أولاً.",
-                true
-            );
-
-            return;
-        }
-
-
-        removeBtn.disabled =
-            true;
-
-
-        const oldText =
-            removeBtn.innerHTML;
-
-
-        removeBtn.innerHTML =
-            'جاري المعالجة <span class="loading"></span>';
-
-
-        showStatus(
-            "⏳ جاري إرسال الصورة إلى LaMa لإعادة بناء الخلفية... قد يستغرق الأمر بعض الوقت على CPU.",
-            false
-        );
-
+        removeBtn.disabled = true;
+        showStatus('جاري إزالة العنصر بالذكاء الاصطناعي... يرجى الانتظار <span class="loading"></span>', false);
 
         try {
+            const imageFile = imageInput.files[0];
+            if (!imageFile) throw new Error("لم يتم العثور على ملف الصورة.");
 
+            const maskBlob = await new Promise((resolve) => maskCanvas.toBlob(resolve, "image/png"));
+            if (!maskBlob) throw new Error("تعذر إنشاء قناع التحديد.");
 
-            // =================================================
-            // IMAGE BLOB
-            // =================================================
+            const formData = new FormData();
+            formData.append("image", imageFile);
+            formData.append("mask", maskBlob, "mask.png");
+            formData.append("method", "ai");
 
-            const imageBlob =
-                await canvasToBlob(
-                    imageCanvas
-                );
+            const response = await fetch("/process", {
+                method: "POST",
+                body: formData
+            });
 
-
-            // =================================================
-            // MASK
-            // =================================================
-
-            /*
-                Create a NEW mask canvas.
-
-                White = REMOVE
-                Black = KEEP
-
-                This is important because
-                the visual mask is semi-transparent.
-            */
-
-            const finalMaskCanvas =
-                document.createElement(
-                    "canvas"
-                );
-
-
-            finalMaskCanvas.width =
-                maskCanvas.width;
-
-
-            finalMaskCanvas.height =
-                maskCanvas.height;
-
-
-            const finalMaskCtx =
-                finalMaskCanvas.getContext(
-                    "2d"
-                );
-
-
-            /*
-                Transparent background
-                becomes BLACK.
-            */
-
-            finalMaskCtx.fillStyle =
-                "black";
-
-
-            finalMaskCtx.fillRect(
-                0,
-                0,
-                finalMaskCanvas.width,
-                finalMaskCanvas.height
-            );
-
-
-            /*
-                Extract alpha from
-                visual mask.
-
-                Any painted area becomes WHITE.
-            */
-
-            const sourceData =
-                maskCtx.getImageData(
-                    0,
-                    0,
-                    maskCanvas.width,
-                    maskCanvas.height
-                );
-
-
-            const outputData =
-                finalMaskCtx.createImageData(
-                    maskCanvas.width,
-                    maskCanvas.height
-                );
-
-
-            for (
-                let i = 0;
-                i < sourceData.data.length;
-                i += 4
-            ) {
-
-                const alpha =
-                    sourceData.data[
-                        i + 3
-                    ];
-
-
-                if (
-                    alpha > 10
-                ) {
-
-                    outputData.data[i] =
-                        255;
-
-                    outputData.data[i + 1] =
-                        255;
-
-                    outputData.data[i + 2] =
-                        255;
-
-                    outputData.data[i + 3] =
-                        255;
-
-                } else {
-
-                    outputData.data[i] =
-                        0;
-
-                    outputData.data[i + 1] =
-                        0;
-
-                    outputData.data[i + 2] =
-                        0;
-
-                    outputData.data[i + 3] =
-                        255;
-                }
+            if (!response.ok) {
+                const errJson = await response.json().catch(() => ({}));
+                throw new Error(errJson.error || "حدث خطأ أثناء معالجة الصورة في الخادم.");
             }
 
+            const resultBlob = await response.blob();
+            const resultUrl = URL.createObjectURL(resultBlob);
 
-            finalMaskCtx.putImageData(
-                outputData,
-                0,
-                0
-            );
+            resultImage.src = resultUrl;
+            downloadBtn.href = resultUrl;
+            resultSection.style.display = "block";
 
+            resultSection.scrollIntoView({ behavior: "smooth" });
+            showStatus("✨ تمت إزالة العنصر بنجاح!", false);
 
-            const maskBlob =
-                await canvasToBlob(
-                    finalMaskCanvas
-                );
-
-
-            // =================================================
-            // FORM DATA
-            // =================================================
-
-            const formData =
-                new FormData();
-
-
-            formData.append(
-                "image",
-                imageBlob,
-                "image.png"
-            );
-
-
-            formData.append(
-                "mask",
-                maskBlob,
-                "mask.png"
-            );
-
-
-            formData.append(
-                "method",
-                "ai"
-            );
-
-
-            // =================================================
-            // SEND
-            // =================================================
-
-            const response =
-                await fetch(
-                    "/process",
-                    {
-                        method: "POST",
-
-                        body: formData
-                    }
-                );
-
-
-            // =================================================
-            // ERROR
-            // =================================================
-
-            if (
-                !response.ok
-            ) {
-
-                let errorMessage =
-                    "حدث خطأ أثناء المعالجة.";
-
-
-                try {
-
-                    const error =
-                        await response.json();
-
-
-                    errorMessage =
-                        error.error ||
-                        error.details ||
-                        errorMessage;
-
-                } catch (e) {}
-
-
-                throw new Error(
-                    errorMessage
-                );
-            }
-
-
-            // =================================================
-            // RESULT
-            // =================================================
-
-            const resultBlob =
-                await response.blob();
-
-
-            const resultURL =
-                URL.createObjectURL(
-                    resultBlob
-                );
-
-
-            resultImage.src =
-                resultURL;
-
-
-            downloadBtn.href =
-                resultURL;
-
-
-            resultSection.style.display =
-                "block";
-
-
-            showStatus(
-                "✅ تم حذف العنصر وإعادة بناء الخلفية!",
-                false
-            );
-
-
-            setTimeout(
-                function () {
-
-                    resultSection.scrollIntoView({
-                        behavior: "smooth",
-                        block: "start"
-                    });
-
-                },
-                300
-            );
-
-
-        } catch (error) {
-
-            console.error(
-                "REMOVE ERROR:",
-                error
-            );
-
-
-            showStatus(
-                "❌ " +
-                error.message,
-                true
-            );
-
-
+        } catch (err) {
+            console.error(err);
+            showStatus("❌ " + (err.message || "حدث خطأ غير معروف."), true);
         } finally {
-
-            removeBtn.disabled =
-                false;
-
-
-            removeBtn.innerHTML =
-                oldText;
+            removeBtn.disabled = false;
         }
-    }
-
-
-    // =========================================================
-    // CANVAS TO BLOB
-    // =========================================================
-
-    function canvasToBlob(
-        canvas
-    ) {
-
-        return new Promise(
-            function (resolve, reject) {
-
-                canvas.toBlob(
-                    function (blob) {
-
-                        if (!blob) {
-
-                            reject(
-                                new Error(
-                                    "Could not create image."
-                                )
-                            );
-
-                            return;
-                        }
-
-
-                        resolve(
-                            blob
-                        );
-
-                    },
-                    "image/png"
-                );
-            }
-        );
-    }
-
-
-    // =========================================================
-    // STATUS
-    // =========================================================
-
-    function showStatus(
-        message,
-        error
-    ) {
-
-        statusBox.style.display =
-            "block";
-
-
-        statusBox.textContent =
-            message;
-
-
-        if (error) {
-
-            statusBox.style.color =
-                "#ff7777";
-
-            statusBox.style.background =
-                "#321818";
-
-        } else {
-
-            statusBox.style.color =
-                "#ddd";
-
-            statusBox.style.background =
-                "#202020";
-        }
-    }
-
-
-    // =========================================================
-    // KEYBOARD SHORTCUTS
-    // =========================================================
-
-    document.addEventListener(
-        "keydown",
-        function (event) {
-
-            /*
-                Ctrl/Cmd + Z
-            */
-
-            if (
-                (
-                    event.ctrlKey ||
-                    event.metaKey
-                ) &&
-                event.key.toLowerCase() === "z"
-            ) {
-
-                event.preventDefault();
-
-                undoBtn.click();
-            }
-
-
-            /*
-                Ctrl/Cmd + Y
-            */
-
-            if (
-                (
-                    event.ctrlKey ||
-                    event.metaKey
-                ) &&
-                event.key.toLowerCase() === "y"
-            ) {
-
-                event.preventDefault();
-
-                redoBtn.click();
-            }
-
-        }
-    );
-
-
-    // =========================================================
-    // INITIAL STATE
-    // =========================================================
-
-    updateBrushCursorSize();
-
-    updateHistoryButtons();
-
+    });
 </script>
 
 </body>
-
 </html>
