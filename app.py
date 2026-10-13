@@ -1,9 +1,6 @@
 import os
 
-# ============================================================
-# FORCE CPU - Render Free does not have NVIDIA GPU
-# ============================================================
-
+# Render Free has no GPU
 os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
 import io
@@ -11,520 +8,217 @@ import traceback
 
 import cv2
 import numpy as np
-
 from PIL import Image
-
-from flask import (
-    Flask,
-    request,
-    jsonify,
-    send_file,
-    render_template
-)
-
-
-# ============================================================
-# FLASK
-# ============================================================
+from flask import Flask, request, jsonify, send_file, render_template
 
 app = Flask(__name__)
-
 app.config["MAX_CONTENT_LENGTH"] = 25 * 1024 * 1024
 
-
-# ============================================================
-# LAMA STATE
-# ============================================================
+# Largest side (px) of the crop that is sent to LaMa. Keeps CPU/RAM usage low.
+MODEL_MAX_SIDE = 1024
 
 lama = None
 lama_error = None
 
 
-# ============================================================
-# LOAD LAMA
-# ============================================================
-
+# ------------------------------------------------------------
+# LaMa loader
+# ------------------------------------------------------------
 def get_lama():
-    global lama
-    global lama_error
-
-    # Already loaded
+    global lama, lama_error
     if lama is not None:
         return lama
-
     try:
         import torch
         from simple_lama_inpainting import SimpleLama
 
-        print("=" * 60)
-        print("Loading LaMa...")
-        print("PyTorch:", torch.__version__)
-        print("CUDA available:", torch.cuda.is_available())
-        print("Device: CPU")
-        print("=" * 60)
-
-        # Force LaMa to CPU
-        device = torch.device("cpu")
-
-        lama = SimpleLama(
-            device=device
-        )
-
+        print("Loading LaMa on CPU...")
+        lama = SimpleLama(device=torch.device("cpu"))
         lama_error = None
-
-        print("=" * 60)
-        print("LaMa loaded successfully!")
-        print("Running on CPU")
-        print("=" * 60)
-
+        print("LaMa loaded.")
         return lama
-
     except Exception as e:
         lama = None
         lama_error = repr(e)
-
-        print("=" * 60)
-        print("LaMa loading failed:")
-        print(repr(e))
-        print("=" * 60)
-
         traceback.print_exc()
-
         return None
 
 
-# ============================================================
-# READ IMAGE
-# ============================================================
-
+# ------------------------------------------------------------
+# Input reading
+# ------------------------------------------------------------
 def read_uploaded_image(file):
-    if file is None:
-        return None
-
-    data = file.read()
-
+    data = file.read() if file else None
     if not data:
         return None
+    arr = np.frombuffer(data, dtype=np.uint8)
+    return cv2.imdecode(arr, cv2.IMREAD_COLOR)
 
-    array = np.frombuffer(
-        data,
-        dtype=np.uint8
-    )
-
-    image = cv2.imdecode(
-        array,
-        cv2.IMREAD_COLOR
-    )
-
-    return image
-
-
-# ============================================================
-# READ MASK
-# ============================================================
 
 def read_mask(file, width, height):
-    if file is None:
-        return None
-
-    data = file.read()
-
+    """The browser mask is a transparent PNG with white strokes.
+    The ALPHA channel is the real mask (erased parts keep white RGB but
+    become transparent, so reading RGB/gray alone is wrong)."""
+    data = file.read() if file else None
     if not data:
         return None
-
-    array = np.frombuffer(
-        data,
-        dtype=np.uint8
-    )
-
-    mask = cv2.imdecode(
-        array,
-        cv2.IMREAD_GRAYSCALE
-    )
-
-    if mask is None:
+    arr = np.frombuffer(data, dtype=np.uint8)
+    img = cv2.imdecode(arr, cv2.IMREAD_UNCHANGED)
+    if img is None:
         return None
 
-    # Make mask exactly same size as image
-    mask = cv2.resize(
-        mask,
-        (width, height),
-        interpolation=cv2.INTER_NEAREST
-    )
+    if img.ndim == 3 and img.shape[2] == 4:
+        mask = img[:, :, 3]
+    elif img.ndim == 3:
+        mask = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    else:
+        mask = img
 
-    # White = remove (255)
-    # Black = keep (0)
-    mask = np.where(
-        mask > 20,
-        255,
-        0
-    ).astype(np.uint8)
+    mask = cv2.resize(mask, (width, height), interpolation=cv2.INTER_NEAREST)
+    return np.where(mask > 20, 255, 0).astype(np.uint8)
 
-    return mask
-
-
-# ============================================================
-# IMPROVE MASK (ENHANCED FOR COMPLETE OBJECT REMOVAL)
-# ============================================================
 
 def improve_mask(mask):
-    # 1. Close small inner holes in mask
-    kernel_close = np.ones((7, 7), np.uint8)
-    mask = cv2.morphologyEx(
-        mask,
-        cv2.MORPH_CLOSE,
-        kernel_close,
-        iterations=2
-    )
-
-    # 2. Remove tiny noise dots
-    kernel_open = np.ones((3, 3), np.uint8)
-    mask = cv2.morphologyEx(
-        mask,
-        cv2.MORPH_OPEN,
-        kernel_open,
-        iterations=1
-    )
-
-    # 3. Dilate mask around object edges so LaMa completely covers the boundaries
-    kernel_dilate = np.ones((5, 5), np.uint8)
-    mask = cv2.dilate(
-        mask,
-        kernel_dilate,
-        iterations=2
-    )
-
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, np.ones((7, 7), np.uint8), iterations=2)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=1)
+    # grow a bit so shadows / edge halos of the object are covered
+    mask = cv2.dilate(mask, np.ones((5, 5), np.uint8), iterations=3)
     return mask
 
 
-# ============================================================
-# LAMA INPAINTING WITH SMART BLENDING
-# ============================================================
-
+# ------------------------------------------------------------
+# Inpainting (crop around the mask -> LaMa -> feathered paste back)
+# ------------------------------------------------------------
 def run_lama(image, mask):
     model = get_lama()
-
     if model is None:
-        raise RuntimeError(
-            "LaMa is not available. "
-            + str(lama_error)
-        )
+        raise RuntimeError("LaMa is not available. " + str(lama_error))
 
-    # OpenCV BGR -> RGB
-    rgb = cv2.cvtColor(
-        image,
-        cv2.COLOR_BGR2RGB
-    )
+    h, w = image.shape[:2]
 
-    pil_image = Image.fromarray(
-        rgb
-    )
+    ys, xs = np.where(mask > 0)
+    x1, x2 = xs.min(), xs.max() + 1
+    y1, y2 = ys.min(), ys.max() + 1
 
-    # Mask
-    pil_mask = Image.fromarray(
-        mask
-    ).convert("L")
+    # extra context around the object so LaMa sees the surrounding background
+    margin = max(64, int(0.5 * max(x2 - x1, y2 - y1)))
+    cx1, cy1 = max(0, x1 - margin), max(0, y1 - margin)
+    cx2, cy2 = min(w, x2 + margin), min(h, y2 + margin)
 
-    print(
-        "Running LaMa Inpainting...",
-        pil_image.size
-    )
+    crop_img = image[cy1:cy2, cx1:cx2]
+    crop_mask = mask[cy1:cy2, cx1:cx2]
+    ch, cw = crop_img.shape[:2]
 
-    # AI INPAINTING
-    result_pil = model(
-        pil_image,
-        pil_mask
-    )
+    # downscale only if the crop is big
+    scale = min(1.0, MODEL_MAX_SIDE / max(ch, cw))
+    if scale < 1.0:
+        mw, mh = max(8, int(cw * scale)), max(8, int(ch * scale))
+        in_img = cv2.resize(crop_img, (mw, mh), interpolation=cv2.INTER_AREA)
+        in_mask = cv2.resize(crop_mask, (mw, mh), interpolation=cv2.INTER_NEAREST)
+    else:
+        in_img, in_mask = crop_img, crop_mask
 
-    # PIL -> numpy
-    result_np = np.array(
-        result_pil
-    )
+    pil_img = Image.fromarray(cv2.cvtColor(in_img, cv2.COLOR_BGR2RGB))
+    pil_mask = Image.fromarray(in_mask).convert("L")
 
-    # RGB -> BGR
-    result_bgr = cv2.cvtColor(
-        result_np,
-        cv2.COLOR_RGB2BGR
-    )
+    print("Running LaMa on crop:", pil_img.size)
+    out = model(pil_img, pil_mask)
+    out = cv2.cvtColor(np.array(out), cv2.COLOR_RGB2BGR)
 
-    # Resize result if model changed dimensions
-    height, width = image.shape[:2]
-    if result_bgr.shape[:2] != (height, width):
-        result_bgr = cv2.resize(
-            result_bgr,
-            (width, height),
-            interpolation=cv2.INTER_LANCZOS4
-        )
+    # back to crop size
+    if out.shape[:2] != (ch, cw):
+        out = cv2.resize(out, (cw, ch), interpolation=cv2.INTER_CUBIC)
 
-    # ----------------------------------------------------
-    # SMART BLENDING: Replace only the masked object area
-    # Keeps the original image sharp without blurring
-    # ----------------------------------------------------
-    mask_3ch = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR).astype(np.float32) / 255.0
-    final_result = (result_bgr * mask_3ch + image * (1.0 - mask_3ch)).astype(np.uint8)
+    # feathered blend: inside the mask -> AI result, soft edge -> no visible seam
+    m = crop_mask.astype(np.float32) / 255.0
+    soft = cv2.GaussianBlur(m, (0, 0), sigmaX=4)
+    alpha = np.maximum(m, soft)[:, :, None]
+    blended = out.astype(np.float32) * alpha + crop_img.astype(np.float32) * (1.0 - alpha)
 
-    return final_result
-
-
-# ============================================================
-# CLASSIC FALLBACK (OPTIMIZED)
-# ============================================================
-
-def run_classic(image, mask):
-    kernel = np.ones((7, 7), np.uint8)
-    dilated_mask = cv2.dilate(
-        mask,
-        kernel,
-        iterations=2
-    )
-
-    result = cv2.inpaint(
-        image,
-        dilated_mask,
-        inpaintRadius=5,
-        flags=cv2.INPAINT_NS
-    )
-
+    result = image.copy()
+    result[cy1:cy2, cx1:cx2] = np.clip(blended, 0, 255).astype(np.uint8)
     return result
 
 
-# ============================================================
-# HOME
-# ============================================================
+def run_classic(image, mask):
+    mask = cv2.dilate(mask, np.ones((7, 7), np.uint8), iterations=2)
+    return cv2.inpaint(image, mask, inpaintRadius=5, flags=cv2.INPAINT_NS)
 
+
+# ------------------------------------------------------------
+# Routes
+# ------------------------------------------------------------
 @app.route("/", methods=["GET"])
 def home():
-    return render_template(
-        "index.html"
-    )
+    return render_template("index.html")
 
-
-# ============================================================
-# HEALTH
-# ============================================================
 
 @app.route("/health", methods=["GET"])
 def health():
-    try:
-        import torch
+    return jsonify({
+        "status": "ok",
+        "device": "cpu",
+        "lama_loaded": lama is not None,
+        "lama_error": lama_error,
+    })
 
-        return jsonify({
-            "status": "ok",
-            "pytorch": torch.__version__,
-            "cuda_available": torch.cuda.is_available(),
-            "device": "cpu",
-            "lama_loaded": lama is not None,
-            "lama_error": lama_error
-        })
-
-    except Exception as e:
-        return jsonify({
-            "status": "ok",
-            "lama_loaded": lama is not None,
-            "lama_error": lama_error,
-            "error": repr(e)
-        })
-
-
-# ============================================================
-# PROCESS
-# ============================================================
 
 @app.route("/process", methods=["POST"])
 def process():
     try:
-        print("=" * 60)
-        print("NEW IMAGE PROCESS REQUEST")
-        print("=" * 60)
-
-        # ----------------------------------------------------
-        # IMAGE
-        # ----------------------------------------------------
-
         image_file = request.files.get("image")
-
         if image_file is None:
-            return jsonify({
-                "success": False,
-                "error": "Image is required."
-            }), 400
+            return jsonify({"success": False, "error": "Image is required."}), 400
 
         image = read_uploaded_image(image_file)
-
         if image is None:
-            return jsonify({
-                "success": False,
-                "error": "Could not read image."
-            }), 400
+            return jsonify({"success": False, "error": "Could not read image."}), 400
 
         height, width = image.shape[:2]
 
-        print(f"Image size: {width} x {height}")
-
-        # ----------------------------------------------------
-        # MASK
-        # ----------------------------------------------------
-
         mask_file = request.files.get("mask")
-
         if mask_file is None:
-            return jsonify({
-                "success": False,
-                "error": "Mask is required."
-            }), 400
+            return jsonify({"success": False, "error": "Mask is required."}), 400
 
-        mask = read_mask(
-            mask_file,
-            width,
-            height
-        )
-
+        mask = read_mask(mask_file, width, height)
         if mask is None:
-            return jsonify({
-                "success": False,
-                "error": "Could not read mask."
-            }), 400
+            return jsonify({"success": False, "error": "Could not read mask."}), 400
 
-        # ----------------------------------------------------
-        # CHECK MASK
-        # ----------------------------------------------------
-
-        mask_pixels = cv2.countNonZero(mask)
-
-        print("Mask pixels:", mask_pixels)
-
-        if mask_pixels == 0:
-            return jsonify({
-                "success": False,
-                "error": "Mask is empty. Please select an object."
-            }), 400
-
-        # ----------------------------------------------------
-        # CLEAN AND DILATE MASK
-        # ----------------------------------------------------
+        if cv2.countNonZero(mask) == 0:
+            return jsonify({"success": False, "error": "Mask is empty. Please select an object."}), 400
 
         mask = improve_mask(mask)
 
-        # ----------------------------------------------------
-        # METHOD
-        # ----------------------------------------------------
-
         method = request.form.get("method", "ai").lower()
 
-        print("Method:", method)
-
-        # ----------------------------------------------------
-        # LAMA
-        # ----------------------------------------------------
-
-        if method in ["ai", "lama", "smart"]:
+        if method in ("ai", "lama", "smart"):
             try:
                 result = run_lama(image, mask)
-                used_method = "lama"
-
             except Exception as e:
-                print("=" * 60)
-                print("LAMA PROCESSING ERROR")
-                print(repr(e))
-                print("=" * 60)
-
                 traceback.print_exc()
-
-                return jsonify({
-                    "success": False,
-                    "error": "LaMa processing failed.",
-                    "details": repr(e)
-                }), 500
-
-        # ----------------------------------------------------
-        # CLASSIC
-        # ----------------------------------------------------
-
-        elif method in ["classic", "opencv"]:
+                return jsonify({"success": False, "error": "LaMa processing failed.", "details": repr(e)}), 500
+        elif method in ("classic", "opencv"):
             result = run_classic(image, mask)
-            used_method = "classic"
-
         else:
-            return jsonify({
-                "success": False,
-                "error": "Unknown method."
-            }), 400
+            return jsonify({"success": False, "error": "Unknown method."}), 400
 
-        # ----------------------------------------------------
-        # ENCODE PNG
-        # ----------------------------------------------------
-
-        success, encoded = cv2.imencode(".png", result)
-
-        if not success:
+        ok, encoded = cv2.imencode(".png", result)
+        if not ok:
             raise RuntimeError("Could not encode result.")
 
-        output = encoded.tobytes()
-
-        print("=" * 60)
-        print("SUCCESS")
-        print("Method:", used_method)
-        print("Output:", width, "x", height)
-        print("=" * 60)
-
-        # ----------------------------------------------------
-        # SEND IMAGE
-        # ----------------------------------------------------
-
-        return send_file(
-            io.BytesIO(output),
-            mimetype="image/png",
-            as_attachment=False,
-            download_name="result.png"
-        )
+        return send_file(io.BytesIO(encoded.tobytes()), mimetype="image/png",
+                         as_attachment=False, download_name="result.png")
 
     except Exception as e:
-        print("=" * 60)
-        print("SERVER ERROR")
-        print(repr(e))
-        print("=" * 60)
-
         traceback.print_exc()
+        return jsonify({"success": False, "error": repr(e)}), 500
 
-        return jsonify({
-            "success": False,
-            "error": repr(e)
-        }), 500
-
-
-# ============================================================
-# FILE TOO LARGE
-# ============================================================
 
 @app.errorhandler(413)
 def too_large(error):
-    return jsonify({
-        "success": False,
-        "error": "Image is too large. Maximum size is 25 MB."
-    }), 413
+    return jsonify({"success": False, "error": "Image is too large. Maximum size is 25 MB."}), 413
 
-
-# ============================================================
-# START
-# ============================================================
 
 if __name__ == "__main__":
-    port = int(
-        os.environ.get(
-            "PORT",
-            5000
-        )
-    )
-
-    print("=" * 60)
-    print("AI IMAGE ERASER")
-    print("Flask server starting...")
-    print("CPU MODE")
-    print("Port:", port)
-    print("=" * 60)
-
-    app.run(
-        host="0.0.0.0",
-        port=port,
-        debug=False
-    )
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)
